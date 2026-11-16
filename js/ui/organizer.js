@@ -1,4 +1,9 @@
-import { catalog, themes, recommended } from "../effects/catalog.js";
+import {
+  catalog,
+  themes,
+  recommended,
+  effectsForTheme,
+} from "../effects/catalog.js";
 import { loadConfig, saveConfig } from "../storage/local.js";
 import { EffectsEngine } from "../effects/engine.js";
 import { Camera } from "../camera/camera.js";
@@ -87,10 +92,8 @@ function render() {
     b.setAttribute("aria-pressed", b.dataset.theme === theme);
   });
   const q = $("#search").value.toLocaleLowerCase("es");
-  const list = catalog.filter(
-    (e) =>
-      e.theme === theme &&
-      `${e.name} ${e.description}`.toLocaleLowerCase("es").includes(q),
+  const list = effectsForTheme(theme).filter((e) =>
+    `${e.name} ${e.description}`.toLocaleLowerCase("es").includes(q),
   );
   const cards = $("#cards");
   cards.replaceChildren();
@@ -143,6 +146,15 @@ function render() {
     cards.append(p);
   }
 }
+form.elements.theme.onchange = () => {
+  theme = form.elements.theme.value;
+  config.theme = theme;
+  config.enabled = recommended(theme);
+  $("#search").value = "";
+  render();
+  $("#save-status").textContent =
+    "Categoría aplicada con sus efectos recomendados. Puedes ajustarlos y guardar.";
+};
 $("#search").oninput = render;
 $("#recommend").onclick = () => {
   config.enabled = [

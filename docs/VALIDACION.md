@@ -1,6 +1,6 @@
 # Estado de aceptación y prueba reproducible
 
-Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 24 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
+Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 35 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
 
 Estado general: pendiente de aceptación física y artística.
 
@@ -74,3 +74,11 @@ Se reprodujo `TypeError: Illegal invocation` al ejecutar el temporizador con las
 Estados del flujo: captura → preparación con cámara apagada → resultado → espera. Apagar el hardware no cambia por sí solo a espera. La prueba del flujo ejecuta las cuatro capturas y verifica que no aparece estado idle ni se activa el carrusel durante preparación/resultado; al volver a empezar sí se activa, sin abrir cámara. El guardado de IndexedDB se hace en segundo plano después de mostrar la foto. El resultado se conserva al ocultar/mostrar la página, hasta «Otra vez» o el retorno automático. QR remoto no implementado; irá en el resultado después de disponer de almacenamiento y enlace privado.
 
 Prueba manual: completar sesión, confirmar indicador de cámara apagado, ver primero la preparación y la tirilla/collage (sin slides intermedios), descargar, y pulsar «Otra vez». Solo entonces deben rotar las instrucciones; otro toque inicia otra sesión. Repetir ocultando la pestaña cuando ya aparece el resultado.
+
+## Vista inmediata y acceso al organizador
+
+La tirilla se compone sincrónicamente en Canvas y se inserta en el resultado antes de iniciar JPEG. La codificación se difiere hasta después de pintar el resultado y habilita la descarga al terminar; no bloquea la foto ni el botón «Otra vez». No hay retardo de 450 ms después de la cuarta captura (sí entre las anteriores). Una prueba mantiene `toBlob` pendiente y comprueba que la composición ya está disponible. Otra comprueba que no hay espera entre el cuarto flash y finish.
+
+El enlace explícito «Organizador · Configurar fiesta» está en el salvapantallas, oculto durante captura. Ruta directa: `/organizador.html`. En móvil, configuración antes de la biblioteca. «Tipo de celebración» admite Fiesta loca, 15 años, Bodas, Cumpleaños, Televisión y cine, y Corporativos. Cambiarlo aplica recomendados de esa categoría; las pestañas siguen permitiendo explorar y mezclar. Cumpleaños reutiliza una selección de efectos de fiesta y no infla el catálogo de 72.
+
+Prueba manual pendiente en teléfono: finalizar sesión y observar la tirilla antes de que se habilite la descarga; comprobar que cámara queda apagada. Esperar descarga y guardar JPEG; revisar resolución. Volver a espera, abrir «Configurar fiesta», cambiar categoría, guardar y completar otra sesión. Durante las fotos no deben aparecer accesos de configuración.

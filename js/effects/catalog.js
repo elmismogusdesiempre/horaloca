@@ -348,7 +348,8 @@ groups.cine.push(
 export const themes = {
   fiesta: "Fiesta loca",
   boda: "Bodas",
-  quince: "Quince años",
+  quince: "15 años",
+  cumpleanos: "Cumpleaños",
   cine: "Televisión y cine",
   empresa: "Corporativos",
 };
@@ -381,6 +382,27 @@ export const catalog = Object.entries(groups).flatMap(([theme, rows]) =>
   })),
 );
 export const byId = new Map(catalog.map((e) => [e.id, e]));
+const birthdayIds = new Set([
+  "party-hat",
+  "top-hat",
+  "king",
+  "queen",
+  "giant-glasses",
+  "heart-glasses",
+  "bow",
+  "bunny",
+  "confetti",
+  "streamers",
+  "disco-lights",
+  "disco-ball",
+  "orbit-stars",
+  "neon-frame",
+]);
+export function effectsForTheme(theme) {
+  return catalog.filter((e) =>
+    theme === "cumpleanos" ? birthdayIds.has(e.id) : e.theme === theme,
+  );
+}
 export function recommended(theme) {
-  return catalog.filter((e) => e.theme === theme).map((e) => e.id);
+  return effectsForTheme(theme).map((e) => e.id);
 }

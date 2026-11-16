@@ -36,7 +36,7 @@ Cámara espejo y exportación espejo deliberadamente coherentes. Cada captura co
 
 ## Pruebas y límites
 
-`npm test`: 24 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 72 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
+`npm test`: 35 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 72 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
 
 El Canvas de Node no equivale a Safari/Chrome. No se ejecutó un navegador, una cámara física ni inferencia facial real en este entorno. Sigue [docs/VALIDACION.md](docs/VALIDACION.md) antes de usar en un evento. La etapa 1 permanece **pendiente de aceptación**.
 
@@ -69,3 +69,9 @@ Las pruebas nuevas verifican valores de píxel del verde CCTV/espía, monocromí
 El invitado espera en un carrusel blanco de cuatro instrucciones que rotan cada 5,5 s, sin acceder a la cámara. Un solo toque en «¡TÓCAME PARA EMPEZAR!» abre la cámara e inicia la sesión completa. Tras copiar la cuarta foto se detienen todas las pistas del stream, se pausa/desconecta el video, se cancela el renderizado y se libera el seguimiento **antes** de exportar o guardar el collage. Tras apagar la cámara se muestra una breve preparación y después el collage, sin iniciar el salvapantallas. El resultado se entrega antes de esperar el guardado local. «Otra vez» o el retorno automático no encienden la cámara; se necesita otro toque explícito. Cambiar de pestaña o salir cancela la sesión y apaga la cámara. También se invalidan las solicitudes de cámara pendientes. Las pruebas de MediaStream son instrumentadas; el indicador físico debe comprobarse en Safari/Chrome móvil siguiendo VALIDACION.md.
 
 El flujo del invitado separa los estados captura → preparación → resultado → espera. El salvapantallas solo corresponde a espera, al pulsar «Otra vez» o al retorno automático configurado. La pantalla de resultado es el lugar previsto para el futuro QR privado junto a la fotografía; todavía no se genera un QR ni un enlace remoto. Cambiar de aplicación no descarta un resultado ya entregado (salvo que venza su retorno automático).
+
+## Resultado inmediato y categorías
+
+El resultado muestra el Canvas original en cuanto se componen las cuatro fotos; no espera la compresión JPEG ni el guardado. La descarga conserva resolución/calidad y se prepara en segundo plano. Se eliminó la pausa tras el cuarto flash. No se ha medido todavía la latencia en el teléfono del usuario.
+
+Acceso visible en espera: «Organizador · Configurar fiesta»; ruta directa `/organizador.html`. En móvil los settings aparecen antes de la biblioteca. «Tipo de celebración» incluye 15 años, Bodas y Cumpleaños además de los temas existentes. Elegir tipo aplica recomendados, editables después. Cumpleaños es una selección de efectos existentes, no efectos duplicados para inflar el catálogo.

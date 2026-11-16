@@ -783,3 +783,45 @@ dialog p {
   color: #747970;
   font-size: 15px;
 }
+.organizer-access {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  right: 20px;
+  background: #f0f5e6;
+  color: #526b35;
+  padding: 12px 15px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.studio-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+#collage-preview canvas {
+  display: block;
+  max-height: 58dvh;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin: 20px auto;
+}
+#download[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: progress;
+}
+@media (max-width: 800px) {
+  .studio-layout .settings {
+    grid-row: 1;
+  }
+  .studio-actions {
+    justify-content: flex-start;
+  }
+  .organizer-access {
+    font-size: 10px;
+    padding: 9px 12px;
+    top: max(12px, env(safe-area-inset-top));
+    right: 12px;
+  }
+}

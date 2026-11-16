@@ -3,7 +3,7 @@ import { Camera } from "../camera/camera.js";
 import { Tracker } from "../tracking/tracker.js";
 import { EffectsEngine } from "../effects/engine.js";
 import { compositions } from "../effects/selection.js";
-import { makeCollage } from "../collage/collage.js";
+import { composeCollage, exportCollage } from "../collage/collage.js";
 import { Session } from "./session.js";
 import { fitViewport, posePrompts } from "./viewport.js";
 import { Screensaver } from "./screensaver.js";
@@ -23,7 +23,8 @@ let tracker = null,
   objectURL,
   audio,
   busy = false,
-  operation = 0;
+  operation = 0,
+  resultGeneration = 0;
 const screensaver = new Screensaver((slide, index, total) => {
   $("#saver-title").textContent = slide.title;
   $("#saver-text").textContent = slide.text;
@@ -150,28 +151,20 @@ const session = new Session({
   },
   finish: async (photos, choices) => {
     // Hardware is already released by Session immediately after shot 4.
-    const { blob } = await makeCollage(photos, config);
     if (session.cancelled || document.hidden) return;
+    const collage = composeCollage(photos, config);
     previous = choices.map((c) => [...c].sort().join("|"));
     clearResult();
-    objectURL = URL.createObjectURL(blob);
-    const resultURL = objectURL;
-    $("#collage-preview").src = objectURL;
-    $("#download").href = objectURL;
-    $("#download").download = `horaloca-${Date.now()}.jpg`;
+    const generation = resultGeneration;
+    $("#collage-preview").append(collage);
+    $("#download").textContent = "Preparando descarga…";
+    $("#download").setAttribute("aria-disabled", "true");
     $("#result-status").textContent =
       "Tu cámara está apagada. Este recuerdo es tuyo.";
     flow.result();
     $("#result").showModal();
-    // Deliver the result before local storage. Persistence must not hold up the
-    // photo or, later, its download QR.
-    void saveSession(blob, { event: config.name, compositions: choices }).catch(
-      () => {
-        if (objectURL === resultURL)
-          $("#result-status").textContent =
-            "Descarga tu recuerdo antes de continuar.";
-      },
-    );
+    // Present the pixels now. JPEG encoding and storage happen after the paint.
+    void prepareDownload(collage, generation);
     let remaining = Math.max(
       10,
       Math.min(300, Number(config.returnSeconds) || 45),
@@ -185,13 +178,54 @@ const session = new Session({
     }, 1000);
   },
 });
+async function prepareDownload(collage, generation) {
+  try {
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+    if (generation !== resultGeneration) return;
+    const blob = await exportCollage(collage, config);
+    if (generation !== resultGeneration) return;
+    objectURL = URL.createObjectURL(blob);
+    $("#download").href = objectURL;
+    $("#download").download = `horaloca-${Date.now()}.jpg`;
+    $("#download").textContent = "Descargar recuerdo ↓";
+    $("#download").setAttribute("aria-disabled", "false");
+    void saveSession(blob, {
+      event: config.name,
+      compositions: previous,
+    }).catch(() => {
+      if (generation === resultGeneration)
+        $("#result-status").textContent =
+          "Descarga tu recuerdo antes de continuar.";
+    });
+  } catch {
+    if (generation === resultGeneration) {
+      $("#result-status").textContent =
+        "No se pudo preparar la descarga. Toca para reintentar.";
+      $("#download").textContent = "Reintentar descarga";
+      $("#download").onclick = (e) => {
+        e.preventDefault();
+        if (generation === resultGeneration) {
+          $("#download").onclick = null;
+          void prepareDownload(collage, generation);
+        }
+      };
+    }
+  }
+}
+$("#download").addEventListener("click", (e) => {
+  if (!$("#download").hasAttribute("href")) e.preventDefault();
+});
 function clearResult() {
+  resultGeneration++;
+  $("#download").onclick = null;
   clearInterval(returnTimer);
   if (objectURL) {
     URL.revokeObjectURL(objectURL);
     objectURL = null;
   }
-  $("#collage-preview").removeAttribute("src");
+  $("#collage-preview").replaceChildren();
   $("#download").removeAttribute("href");
 }
 function reset() {

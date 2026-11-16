@@ -15,7 +15,7 @@ export function cover(ctx, image, x, y, w, h) {
     h,
   );
 }
-export async function makeCollage(photos, config) {
+export function composeCollage(photos, config) {
   if (photos.length !== 4) throw new Error("Se necesitan cuatro fotografías.");
   const strip = config.layout === "strip",
     c = document.createElement("canvas");
@@ -92,6 +92,9 @@ export async function makeCollage(photos, config) {
     ctx.textAlign = "left";
     ctx.fillText("HORA LOCA / EVENT EDITION", pad, c.height - 30);
   }
+  return c;
+}
+export async function exportCollage(c, config) {
   const blob = await new Promise((resolve) =>
     c.toBlob(
       resolve,
@@ -100,5 +103,9 @@ export async function makeCollage(photos, config) {
     ),
   );
   if (!blob) throw new Error("No se pudo exportar el collage.");
-  return { blob, canvas: c };
+  return blob;
+}
+export async function makeCollage(photos, config) {
+  const canvas = composeCollage(photos, config);
+  return { canvas, blob: await exportCollage(canvas, config) };
 }

@@ -46,7 +46,7 @@ export class Session {
         // flash delay, collage export, storage or result dialog can block.
         if (photos.length === 4) releaseOnce();
         this.onPhase({ phase: "flash", index: i });
-        await this.sleep(450);
+        if (i < 3) await this.sleep(450);
       }
       this.check();
       await this.finish(photos, choices);
