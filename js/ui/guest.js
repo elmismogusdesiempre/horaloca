@@ -7,6 +7,7 @@ import { makeCollage } from "../collage/collage.js";
 import { Session } from "./session.js";
 import { fitViewport, posePrompts } from "./viewport.js";
 import { Screensaver } from "./screensaver.js";
+import { startCamera } from "./startup.js";
 const $ = (s) => document.querySelector(s),
   canvas = $("#view"),
   ctx = canvas.getContext("2d"),
@@ -217,28 +218,24 @@ $("#camera-start").onclick = async () => {
   const token = ++operation;
   $("#camera-start").disabled = true;
   screensaver.stop();
-  requestImmersion();
   let failure = null;
   const check = () => {
     if (token !== operation || document.hidden)
       throw new DOMException("Inicio cancelado.", "AbortError");
   };
   try {
-    if (config.sound) {
-      try {
-        audio ??= new AudioContext();
-        await audio.resume();
-      } catch {
-        /* Sound is optional; camera cleanup must not depend on it. */
-      }
-    }
     check();
-    announce("Encendiendo la cámara…");
-    await camera.start();
+    announce("Encendiendo la cámara… Si aparece un permiso, elige Permitir.");
+    await startCamera(camera, () => {
+      if (!config.sound) return;
+      audio ??= new AudioContext();
+      return audio.resume();
+    });
     check();
     $("#welcome").hidden = true;
     document.body.classList.add("camera-on", "session-active");
     resizeCamera();
+    requestImmersion();
     $("#pose-prompt").textContent = "¡Busquen su mejor pose!";
     raf = requestAnimationFrame(render);
     const ownTracker = new Tracker();
@@ -254,7 +251,10 @@ $("#camera-start").onclick = async () => {
     }
     await session.run();
   } catch (e) {
-    if (e.name !== "AbortError")
+    if (e.name === "AbortError" && token === operation && !document.hidden)
+      failure =
+        "El navegador interrumpió el inicio. Toca de nuevo para activar la cámara.";
+    else if (e.name !== "AbortError")
       failure =
         e.name === "NotAllowedError"
           ? "Permiso de cámara denegado. Habilítalo y vuelve a tocar el botón."

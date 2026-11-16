@@ -60,3 +60,7 @@ Prueba manual en teléfono:
 4. Pulsar «Otra vez» o esperar el retorno: deben aparecer las instrucciones y mantenerse apagada la cámara. Solo otro toque explícito abre una nueva sesión.
 5. Cambiar de pestaña durante cuenta regresiva o carga de cámara: debe apagarse. Volver no debe encenderla automáticamente. Repetir cinco sesiones y comprobar que no quedan streams anteriores activos.
 6. Probar denegación de permiso y reintento, rotación de pantalla y restauración desde el historial. Se mantienen layout blanco, esquinas rectas y fullscreen cuando el navegador lo permite.
+
+## Regresión de inicio móvil
+
+El inicio no debe esperar `AudioContext.resume()`: en móvil puede quedar pendiente durante permisos/transiciones. Se solicita la cámara primero y el sonido se prepara sin bloquearla. Pruebas de regresión: audio pendiente, audio rechazado/no disponible y permiso de cámara denegado con audio pendiente. Repetir manualmente en el teléfono donde se observó el fallo. Fullscreen se solicita después de adquirir el video y no condiciona el inicio de cámara.
