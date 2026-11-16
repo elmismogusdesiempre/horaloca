@@ -8,6 +8,7 @@ import { Session } from "./session.js";
 import { fitViewport, posePrompts } from "./viewport.js";
 import { Screensaver } from "./screensaver.js";
 import { startCamera } from "./startup.js";
+import { GuestFlow } from "./guest-flow.js";
 const $ = (s) => document.querySelector(s),
   canvas = $("#view"),
   ctx = canvas.getContext("2d"),
@@ -36,15 +37,20 @@ function announce(message) {
   $("#status").textContent = message;
   $("#camera-message").textContent = message;
 }
-function showIdle() {
-  document.body.classList.remove("camera-on", "session-active");
-  $("#welcome").hidden = false;
-  $("#pose-prompt").textContent = "";
-  $("#countdown").textContent = "";
-  $("#flash").classList.remove("active");
-  if (!document.hidden) screensaver.start();
+function renderScreen(state) {
+  screensaver.stop();
+  document.body.classList.toggle("camera-on", state === "capturing");
+  document.body.classList.toggle("session-active", state === "capturing");
+  $("#welcome").hidden = state !== "idle";
+  $("#processing").hidden = state !== "processing";
+  if (state !== "capturing") {
+    $("#pose-prompt").textContent = "";
+    $("#countdown").textContent = "";
+    $("#flash").classList.remove("active");
+  }
+  if (state === "idle" && !document.hidden) screensaver.start();
 }
-function releaseCamera(updateMessage = true) {
+function releaseCamera() {
   cancelAnimationFrame(raf);
   raf = null;
   camera.stop();
@@ -53,10 +59,8 @@ function releaseCamera(updateMessage = true) {
   engine.looks.close();
   ids = [];
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (updateMessage)
-    announce("La cámara está apagada. Solo se activa cuando empiezas.");
-  showIdle();
 }
+const flow = new GuestFlow({ release: releaseCamera, render: renderScreen });
 function resizeCamera() {
   const rect = $(".camera-stage").getBoundingClientRect();
   fitViewport(canvas, rect.width, rect.height);
@@ -107,7 +111,7 @@ const session = new Session({
       tracking: tracker?.ready || false,
       previous,
     }),
-  release: releaseCamera,
+  release: () => flow.captured(),
   onPhase: (p) => {
     if (p.phase === "effect") {
       ids = p.ids;
@@ -149,22 +153,25 @@ const session = new Session({
     const { blob } = await makeCollage(photos, config);
     if (session.cancelled || document.hidden) return;
     previous = choices.map((c) => [...c].sort().join("|"));
-    let message =
-      "La cámara está apagada. Descarga tu recuerdo y vuelve cuando quieras.";
-    try {
-      await saveSession(blob, { event: config.name, compositions: choices });
-    } catch {
-      message =
-        "La cámara está apagada. Descarga el recuerdo: no se pudo guardar localmente.";
-    }
-    if (session.cancelled || document.hidden) return;
-    announce(message);
     clearResult();
     objectURL = URL.createObjectURL(blob);
+    const resultURL = objectURL;
     $("#collage-preview").src = objectURL;
     $("#download").href = objectURL;
     $("#download").download = `horaloca-${Date.now()}.jpg`;
+    $("#result-status").textContent =
+      "Tu cámara está apagada. Este recuerdo es tuyo.";
+    flow.result();
     $("#result").showModal();
+    // Deliver the result before local storage. Persistence must not hold up the
+    // photo or, later, its download QR.
+    void saveSession(blob, { event: config.name, compositions: choices }).catch(
+      () => {
+        if (objectURL === resultURL)
+          $("#result-status").textContent =
+            "Descarga tu recuerdo antes de continuar.";
+      },
+    );
     let remaining = Math.max(
       10,
       Math.min(300, Number(config.returnSeconds) || 45),
@@ -191,7 +198,7 @@ function reset() {
   // Returning to the screensaver never calls getUserMedia.
   if ($("#result").open) $("#result").close();
   clearResult();
-  releaseCamera();
+  flow.idle();
   $("#camera-start").disabled = busy || !config;
   announce("La cámara está apagada. Solo se activa cuando empiezas.");
 }
@@ -232,8 +239,7 @@ $("#camera-start").onclick = async () => {
       return audio.resume();
     });
     check();
-    $("#welcome").hidden = true;
-    document.body.classList.add("camera-on", "session-active");
+    flow.start();
     resizeCamera();
     requestImmersion();
     $("#pose-prompt").textContent = "¡Busquen su mejor pose!";
@@ -260,7 +266,9 @@ $("#camera-start").onclick = async () => {
           ? "Permiso de cámara denegado. Habilítalo y vuelve a tocar el botón."
           : e.message;
   } finally {
-    releaseCamera(false);
+    releaseCamera();
+    // Success leaves the result on screen. Only errors/cancellation go idle.
+    if (flow.state !== "result") flow.idle();
     if (failure) announce(failure);
     busy = false;
     $("#camera-start").disabled = !config;
@@ -270,16 +278,20 @@ function suspend() {
   operation++;
   session.cancel();
   releaseCamera();
+  // Switching apps to download must not dismiss an already delivered result.
+  if (flow.state !== "result") {
+    flow.idle();
+    if ($("#result").open) $("#result").close();
+    clearResult();
+  }
   screensaver.stop();
-  if ($("#result").open) $("#result").close();
-  clearResult();
   audio?.suspend().catch(() => {});
 }
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) suspend();
-  else if (!camera.stream) screensaver.start();
+  else if (flow.state === "idle") screensaver.start();
 });
 window.addEventListener("pagehide", suspend);
 window.addEventListener("pageshow", () => {
-  if (!camera.stream && !document.hidden) screensaver.start();
+  if (flow.state === "idle" && !document.hidden) screensaver.start();
 });

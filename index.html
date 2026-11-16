@@ -45,6 +45,11 @@
           La cámara está apagada. Solo se activa cuando empiezas.
         </p>
       </section>
+      <section id="processing" class="processing" hidden aria-live="polite">
+        <span class="eyebrow">TUS CUATRO MOMENTOS</span>
+        <h1>Tu recuerdo<br />ya viene.</h1>
+        <p>Preparando tus fotos…</p>
+      </section>
       <p id="pose-prompt" class="pose-prompt" aria-live="polite"></p>
       <div id="countdown" class="countdown" aria-live="assertive"></div>
       <div id="flash" class="flash"></div>
@@ -61,6 +66,7 @@
         download="horaloca.jpg"
         >Descargar recuerdo ↓</a
       ><button id="again" class="button ghost">Otra vez</button>
+      <p id="result-status" role="status"></p>
       <p id="return-message"></p>
     </dialog>
     <script type="module" src="/js/ui/guest.js"></script>

@@ -761,3 +761,25 @@ dialog p {
     padding: 15px 22px;
   }
 }
+.processing {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: #fff;
+  padding: 25px;
+}
+.processing .eyebrow {
+  color: #81964e;
+}
+.processing h1 {
+  font-size: clamp(42px, 6vw, 72px);
+}
+.processing p {
+  color: #747970;
+  font-size: 15px;
+}

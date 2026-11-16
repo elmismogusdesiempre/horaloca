@@ -68,3 +68,9 @@ El inicio no debe esperar `AudioContext.resume()`: en móvil puede quedar pendie
 ## Bloqueo anterior a habilitar el botón
 
 Se reprodujo `TypeError: Illegal invocation` al ejecutar el temporizador con las restricciones de receptor de las APIs de Window. Guardar `setInterval` directamente en una propiedad y ejecutarlo como `this.schedule(...)` enlazaba el receptor a Screensaver. La excepción ocurría antes de cargar configuración/habilitar el botón. Los valores por defecto ahora llaman `globalThis.setInterval/clearInterval` conservando su receptor; si el temporizador no está disponible se mantiene una instrucción estática sin interrumpir la inicialización. Una prueba falla con la versión anterior y pasa con la corrección. Sigue pendiente confirmar el flujo en el teléfono del usuario.
+
+## Entrega antes del salvapantallas
+
+Estados del flujo: captura → preparación con cámara apagada → resultado → espera. Apagar el hardware no cambia por sí solo a espera. La prueba del flujo ejecuta las cuatro capturas y verifica que no aparece estado idle ni se activa el carrusel durante preparación/resultado; al volver a empezar sí se activa, sin abrir cámara. El guardado de IndexedDB se hace en segundo plano después de mostrar la foto. El resultado se conserva al ocultar/mostrar la página, hasta «Otra vez» o el retorno automático. QR remoto no implementado; irá en el resultado después de disponer de almacenamiento y enlace privado.
+
+Prueba manual: completar sesión, confirmar indicador de cámara apagado, ver primero la preparación y la tirilla/collage (sin slides intermedios), descargar, y pulsar «Otra vez». Solo entonces deben rotar las instrucciones; otro toque inicia otra sesión. Repetir ocultando la pestaña cuando ya aparece el resultado.
