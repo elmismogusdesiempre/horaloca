@@ -36,7 +36,7 @@ Cámara espejo y exportación espejo deliberadamente coherentes. Cada captura co
 
 ## Pruebas y límites
 
-`npm test`: 15 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 72 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
+`npm test`: 24 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 72 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
 
 El Canvas de Node no equivale a Safari/Chrome. No se ejecutó un navegador, una cámara física ni inferencia facial real en este entorno. Sigue [docs/VALIDACION.md](docs/VALIDACION.md) antes de usar en un evento. La etapa 1 permanece **pendiente de aceptación**.
 
@@ -63,3 +63,7 @@ Ocho composiciones fotográficas nuevas en Televisión y cine: falso color térm
 Corona floral y arreglos de boda: rosas vectoriales con pétalos en capas, hojas con nervaduras y ramas. Tiaras/reina: alambres curvos, perlas y engastes. No se agregan emojis dependientes del sistema. No se habilitan efectos nuevos automáticamente en eventos guardados: el organizador mantiene control de los autorizados.
 
 Las pruebas nuevas verifican valores de píxel del verde CCTV/espía, monocromía de cine negro, falso color térmico y proporciones de viewport. Son pruebas en Canvas nativo de Node; falta comprobar fluidez y compatibilidad visual en cámaras físicas y navegadores.
+
+## Salvapantallas y cierre estricto de cámara
+
+El invitado espera en un carrusel blanco de cuatro instrucciones que rotan cada 5,5 s, sin acceder a la cámara. Un solo toque en «¡TÓCAME PARA EMPEZAR!» abre la cámara e inicia la sesión completa. Tras copiar la cuarta foto se detienen todas las pistas del stream, se pausa/desconecta el video, se cancela el renderizado y se libera el seguimiento **antes** de exportar o guardar el collage. El salvapantallas queda de fondo mientras se muestra el resultado. «Otra vez» o el retorno automático no encienden la cámara; se necesita otro toque explícito. Cambiar de pestaña o salir cancela la sesión y apaga la cámara. También se invalidan las solicitudes de cámara pendientes. Las pruebas de MediaStream son instrumentadas; el indicador físico debe comprobarse en Safari/Chrome móvil siguiendo VALIDACION.md.

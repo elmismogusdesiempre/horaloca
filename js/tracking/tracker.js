@@ -108,7 +108,9 @@ export class Tracker {
     return this.faces;
   }
   close() {
-    this.model?.close();
+    const model = this.model;
+    this.model = null;
+    model?.close();
     this.faces = [];
     this.ready = false;
   }

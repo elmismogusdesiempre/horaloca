@@ -2,6 +2,7 @@ export class Camera {
   constructor(video) {
     this.video = video;
     this.stream = null;
+    this.generation = 0;
   }
   async start() {
     if (!navigator.mediaDevices?.getUserMedia)
@@ -9,7 +10,8 @@ export class Camera {
         "La cámara requiere HTTPS o localhost y un navegador compatible.",
       );
     this.stop();
-    this.stream = await navigator.mediaDevices.getUserMedia({
+    const generation = this.generation;
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
         width: { ideal: 1920 },
@@ -17,12 +19,28 @@ export class Camera {
       },
       audio: false,
     });
-    this.video.srcObject = this.stream;
-    await this.video.play();
+    const abort = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      throw new DOMException("Inicio de cámara cancelado.", "AbortError");
+    };
+    if (generation !== this.generation) abort();
+    this.stream = stream;
+    this.video.srcObject = stream;
+    try {
+      await this.video.play();
+    } catch (error) {
+      if (this.stream === stream) this.stop();
+      else stream.getTracks().forEach((t) => t.stop());
+      throw error;
+    }
+    if (generation !== this.generation) abort();
   }
   stop() {
+    // Invalidates pending permission requests as well as the active stream.
+    this.generation++;
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
+    this.video.pause?.();
     this.video.srcObject = null;
   }
   draw(ctx, w, h) {

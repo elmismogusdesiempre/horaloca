@@ -30,18 +30,24 @@
           aria-label="Hora Loca, ir al organizador"
           >hora<span>loca</span><i>✳</i></a
         >
-        <h1>Tu gente.<br />Tu momento.</h1>
-        <button id="camera-start" class="button lime">Activar cámara ↗</button>
+        <div class="saver-slide" aria-label="Cómo funciona">
+          <p id="saver-step" class="eyebrow">01 / 04</p>
+          <h1 id="saver-title">Acércate.</h1>
+          <p id="saver-text">Reúne a tu gente frente a la pantalla.</p>
+          <div class="saver-progress" aria-hidden="true">
+            <span class="current"></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <button id="camera-start" class="button lime">
+          ¡TÓCAME PARA EMPEZAR!
+        </button>
         <p id="camera-message">
-          Tus fotografías se quedan en este dispositivo.
+          La cámara está apagada. Solo se activa cuando empiezas.
         </p>
       </section>
       <p id="pose-prompt" class="pose-prompt" aria-live="polite"></p>
       <div id="countdown" class="countdown" aria-live="assertive"></div>
       <div id="flash" class="flash"></div>
-      <button id="start" class="button lime guest-start" disabled hidden>
-        ¡TÓCAME PARA EMPEZAR!
-      </button>
       <p id="status" class="sr-only" role="status"></p>
     </main>
     <dialog id="result">

@@ -1,6 +1,6 @@
 # Estado de aceptación y prueba reproducible
 
-Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 15 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
+Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 24 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
 
 Estado general: pendiente de aceptación física y artística.
 
@@ -45,3 +45,18 @@ No hay objetivo FPS aprobado todavía. Objetivo para aceptación: render fluido 
 - Cine: probar CCTV y espía, comprobar que la cara se vuelve verde y el collage conserva exactamente el tratamiento; comprobar texto GRABANDO.
 - Activar por separado los ocho estilos nuevos; revisar legibilidad, resolución deliberadamente reducida de térmico/cómic, fluidez de VHS/prisma y que el falso color se identifique como simulación.
 - Boda: comprobar corona floral a diferentes distancias, tamaño de pétalos, continuidad de hojas y que bouquets en esquinas no cubren caras. Tiaras deben seguir los ojos/cabeza, sin picos triangulares.
+
+## Cámara apagada y salvapantallas
+
+El cierre se ejecuta tras copiar la cuarta captura, antes del último retardo, generación del collage y almacenamiento. También se cierran cámara, seguimiento y renderizado al cancelar, ocultar pestaña o salir. Una solicitud de cámara que resuelva después de su cancelación detiene sus pistas sin conectarlas al video. El salvapantallas no solicita medios.
+
+Pruebas automatizadas con MediaStreams y video instrumentados: apagado antes del resultado; fallos de captura/exportación/play; cancelación; permisos y play pendientes; nueva apertura explícita; cinco sesiones consecutivas; cuatro slides cíclicos y un solo temporizador. Esto verifica llamadas y estados de pistas, no el indicador físico del teléfono.
+
+Prueba manual en teléfono:
+
+1. Al abrir el invitado, confirmar cámara apagada y cuatro instrucciones rotando cada 5,5 s. Esperar 30 s: la cámara no debe activarse.
+2. Tocar «¡TÓCAME PARA EMPEZAR!» una vez, conceder permiso y completar las cuatro fotos sin otro toque.
+3. Tras la cuarta foto, confirmar que se apaga el indicador de uso de cámara. El navegador puede conservar un icono de permiso concedido; distinguirlo del indicador de uso activo. Al ver/descargar el collage, la cámara debe seguir apagada.
+4. Pulsar «Otra vez» o esperar el retorno: deben aparecer las instrucciones y mantenerse apagada la cámara. Solo otro toque explícito abre una nueva sesión.
+5. Cambiar de pestaña durante cuenta regresiva o carga de cámara: debe apagarse. Volver no debe encenderla automáticamente. Repetir cinco sesiones y comprobar que no quedan streams anteriores activos.
+6. Probar denegación de permiso y reintento, rotación de pantalla y restauración desde el historial. Se mantienen layout blanco, esquinas rectas y fullscreen cuando el navegador lo permite.

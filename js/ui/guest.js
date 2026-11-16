@@ -6,51 +6,74 @@ import { compositions } from "../effects/selection.js";
 import { makeCollage } from "../collage/collage.js";
 import { Session } from "./session.js";
 import { fitViewport, posePrompts } from "./viewport.js";
+import { Screensaver } from "./screensaver.js";
 const $ = (s) => document.querySelector(s),
   canvas = $("#view"),
   ctx = canvas.getContext("2d"),
   camera = new Camera($("#video")),
-  engine = new EffectsEngine(),
-  tracker = new Tracker();
-let config,
+  engine = new EffectsEngine();
+let tracker = null,
+  config,
   ids = [],
   previous = [],
   raf,
   returnTimer,
   objectURL,
   audio,
-  ready = false;
-try {
-  config = await loadConfig();
-} catch {
-  $("#status").textContent =
-    "No se puede acceder al almacenamiento local. Habilítalo para continuar.";
-  $("#camera-message").textContent = $("#status").textContent;
-  throw new Error("IndexedDB unavailable");
+  busy = false,
+  operation = 0;
+const screensaver = new Screensaver((slide, index, total) => {
+  $("#saver-title").textContent = slide.title;
+  $("#saver-text").textContent = slide.text;
+  $("#saver-step").textContent =
+    `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
+  document
+    .querySelectorAll(".saver-progress span")
+    .forEach((el, i) => el.classList.toggle("current", i === index));
+});
+function announce(message) {
+  $("#status").textContent = message;
+  $("#camera-message").textContent = message;
+}
+function showIdle() {
+  document.body.classList.remove("camera-on", "session-active");
+  $("#welcome").hidden = false;
+  $("#pose-prompt").textContent = "";
+  $("#countdown").textContent = "";
+  $("#flash").classList.remove("active");
+  if (!document.hidden) screensaver.start();
+}
+function releaseCamera(updateMessage = true) {
+  cancelAnimationFrame(raf);
+  raf = null;
+  camera.stop();
+  tracker?.close();
+  tracker = null;
+  engine.looks.close();
+  ids = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (updateMessage)
+    announce("La cámara está apagada. Solo se activa cuando empiezas.");
+  showIdle();
 }
 function resizeCamera() {
-  const rect = document.querySelector(".camera-stage").getBoundingClientRect();
+  const rect = $(".camera-stage").getBoundingClientRect();
   fitViewport(canvas, rect.width, rect.height);
 }
 resizeCamera();
 window.addEventListener("resize", resizeCamera);
 window.visualViewport?.addEventListener("resize", resizeCamera);
-function announce(message) {
-  $("#status").textContent = message;
-  $("#camera-message").textContent = message;
-}
 function requestImmersion() {
   try {
     document.documentElement.requestFullscreen?.().catch(() => {});
   } catch {}
 }
-
-document.documentElement.style.setProperty("--accent", config.color);
-await engine.setLogo(config.logo).catch(() => {});
 function render(now) {
+  if (!camera.stream?.active) return;
   camera.draw(ctx, canvas.width, canvas.height);
-  const faces = tracker.update(camera.video, canvas.width, canvas.height, now);
-  engine.quality = tracker.cost > 65 ? 0.5 : 1;
+  const faces =
+    tracker?.update(camera.video, canvas.width, canvas.height, now) || [];
+  engine.quality = (tracker?.cost || 0) > 65 ? 0.5 : 1;
   engine.render(
     ctx,
     canvas.width,
@@ -77,49 +100,13 @@ function tone() {
     o.stop(audio.currentTime + 0.13);
   } catch {}
 }
-$("#camera-start").onclick = async () => {
-  const b = $("#camera-start");
-  b.disabled = true;
-  requestImmersion();
-  try {
-    await camera.start();
-    $("#welcome").hidden = true;
-    $("#welcome").style.display = "none";
-    document.body.classList.add("camera-on");
-    resizeCamera();
-    raf = requestAnimationFrame(render);
-    $("#status").textContent =
-      "Cargando seguimiento facial. La primera carga necesita conexión…";
-    try {
-      await tracker.init();
-      $("#status").textContent =
-        "Cámara lista · seguimiento de hasta 3 rostros · fotos locales.";
-    } catch {
-      $("#status").textContent =
-        "Seguimiento no disponible: solo se usarán ambientes y marcos autorizados.";
-    }
-    ids = compositions(config.enabled, { tracking: tracker.ready })[0];
-    ready = true;
-    $("#start").disabled = false;
-    $("#start").hidden = false;
-  } catch (e) {
-    const message =
-      e.name === "NotAllowedError"
-        ? "Permiso de cámara denegado. Habilítalo en el navegador y vuelve a intentarlo."
-        : e.message;
-    announce(message);
-    document.body.classList.remove("camera-on");
-    cancelAnimationFrame(raf);
-    camera.stop();
-    tracker.close();
-    $("#welcome").hidden = false;
-    $("#welcome").style.display = "flex";
-    b.disabled = false;
-  }
-};
 const session = new Session({
   choose: () =>
-    compositions(config.enabled, { tracking: tracker.ready, previous }),
+    compositions(config.enabled, {
+      tracking: tracker?.ready || false,
+      previous,
+    }),
+  release: releaseCamera,
   onPhase: (p) => {
     if (p.phase === "effect") {
       ids = p.ids;
@@ -127,19 +114,17 @@ const session = new Session({
       $("#countdown").textContent = "";
     }
     if (p.phase === "prepare") {
-      $("#countdown").className = "countdown prepare";
       $("#pose-prompt").textContent = "¡Acérquense! Esto va a estar bueno.";
       $("#countdown").textContent = p.number;
     }
-    if (p.phase === "countdown") {
-      $("#countdown").className = "countdown";
-      $("#countdown").textContent = p.number;
-    }
+    if (p.phase === "countdown") $("#countdown").textContent = p.number;
     if (p.phase === "flash") {
       $("#countdown").textContent = "";
-      $("#flash").classList.remove("active");
-      void $("#flash").offsetWidth;
-      $("#flash").classList.add("active");
+      if (p.index < 3) {
+        $("#flash").classList.remove("active");
+        void $("#flash").offsetWidth;
+        $("#flash").classList.add("active");
+      }
       tone();
     }
   },
@@ -150,7 +135,7 @@ const session = new Session({
       camera.video.paused
     )
       throw new Error(
-        "La cámara se interrumpió. Vuelve a activar la cámara antes de otra sesión.",
+        "La cámara se interrumpió. Toca el botón para volver a intentarlo.",
       );
     const copy = document.createElement("canvas");
     copy.width = canvas.width;
@@ -159,94 +144,142 @@ const session = new Session({
     return copy;
   },
   finish: async (photos, choices) => {
-    $("#status").textContent = "Preparando tu recuerdo…";
+    // Hardware is already released by Session immediately after shot 4.
     const { blob } = await makeCollage(photos, config);
+    if (session.cancelled || document.hidden) return;
     previous = choices.map((c) => [...c].sort().join("|"));
+    let message =
+      "La cámara está apagada. Descarga tu recuerdo y vuelve cuando quieras.";
     try {
       await saveSession(blob, { event: config.name, compositions: choices });
-      $("#status").textContent =
-        "Recuerdo guardado localmente. Descárgalo para conservarlo.";
     } catch {
-      $("#status").textContent =
-        "No se pudo guardar localmente. Descarga el recuerdo antes de continuar.";
+      message =
+        "La cámara está apagada. Descarga el recuerdo: no se pudo guardar localmente.";
     }
-    if (objectURL) URL.revokeObjectURL(objectURL);
+    if (session.cancelled || document.hidden) return;
+    announce(message);
+    clearResult();
     objectURL = URL.createObjectURL(blob);
     $("#collage-preview").src = objectURL;
     $("#download").href = objectURL;
     $("#download").download = `horaloca-${Date.now()}.jpg`;
-    $("#pose-prompt").textContent = "";
     $("#result").showModal();
     let remaining = Math.max(
       10,
       Math.min(300, Number(config.returnSeconds) || 45),
     );
-    $("#return-message").textContent = `Volvemos a empezar en ${remaining} s`;
+    $("#return-message").textContent =
+      `Volvemos al inicio en ${remaining} s · Cámara apagada`;
     returnTimer = setInterval(() => {
       $("#return-message").textContent =
-        `Volvemos a empezar en ${--remaining} s`;
+        `Volvemos al inicio en ${--remaining} s · Cámara apagada`;
       if (remaining <= 0) reset();
     }, 1000);
   },
 });
-$("#start").onclick = async () => {
-  if (!ready || session.running) return;
-  $("#start").disabled = true;
-  document.body.classList.add("session-active");
-  try {
-    if (config.sound) {
-      audio ??= new AudioContext();
-      await audio.resume();
-    }
-    requestImmersion();
-    await session.run();
-  } catch (e) {
-    $("#countdown").textContent = "";
-    announce(e.message);
-    $("#pose-prompt").textContent = e.message;
-    if (!camera.stream?.active || camera.video.paused) {
-      ready = false;
-      document.body.classList.remove("camera-on");
-      $("#start").hidden = true;
-      cancelAnimationFrame(raf);
-      camera.stop();
-      tracker.close();
-      $("#welcome").hidden = false;
-      $("#welcome").style.display = "flex";
-      $("#camera-start").disabled = false;
-    }
-  } finally {
-    document.body.classList.remove("session-active");
-    if (!$("#result").open) $("#start").disabled = !ready;
-  }
-};
-function reset() {
+function clearResult() {
   clearInterval(returnTimer);
-  document.body.classList.remove("session-active");
-  if ($("#result").open) $("#result").close();
-  $("#start").disabled = !ready;
-  $("#countdown").textContent = "";
-  $("#pose-prompt").textContent = "";
-  ids = [];
   if (objectURL) {
     URL.revokeObjectURL(objectURL);
     objectURL = null;
-    $("#collage-preview").removeAttribute("src");
-    $("#download").removeAttribute("href");
   }
+  $("#collage-preview").removeAttribute("src");
+  $("#download").removeAttribute("href");
+}
+function reset() {
+  // Returning to the screensaver never calls getUserMedia.
+  if ($("#result").open) $("#result").close();
+  clearResult();
+  releaseCamera();
+  $("#camera-start").disabled = busy || !config;
+  announce("La cámara está apagada. Solo se activa cuando empiezas.");
 }
 $("#again").onclick = reset;
 $("#result").addEventListener("cancel", (e) => {
   e.preventDefault();
   reset();
 });
-window.addEventListener("pagehide", () => {
+$("#camera-start").disabled = true;
+screensaver.start();
+try {
+  config = await loadConfig();
+  await engine.setLogo(config.logo).catch(() => {});
+  document.documentElement.style.setProperty("--accent", config.color);
+  $("#camera-start").disabled = false;
+} catch {
+  announce(
+    "No se puede acceder al almacenamiento local. Habilítalo para continuar.",
+  );
+}
+$("#camera-start").onclick = async () => {
+  if (busy || !config || document.hidden) return;
+  busy = true;
+  const token = ++operation;
+  $("#camera-start").disabled = true;
+  screensaver.stop();
+  requestImmersion();
+  let failure = null;
+  const check = () => {
+    if (token !== operation || document.hidden)
+      throw new DOMException("Inicio cancelado.", "AbortError");
+  };
+  try {
+    if (config.sound) {
+      try {
+        audio ??= new AudioContext();
+        await audio.resume();
+      } catch {
+        /* Sound is optional; camera cleanup must not depend on it. */
+      }
+    }
+    check();
+    announce("Encendiendo la cámara…");
+    await camera.start();
+    check();
+    $("#welcome").hidden = true;
+    document.body.classList.add("camera-on", "session-active");
+    resizeCamera();
+    $("#pose-prompt").textContent = "¡Busquen su mejor pose!";
+    raf = requestAnimationFrame(render);
+    const ownTracker = new Tracker();
+    tracker = ownTracker;
+    try {
+      await ownTracker.init();
+    } catch {
+      /* Authorized scene effects remain available without tracking. */
+    }
+    if (token !== operation || document.hidden) {
+      ownTracker.close();
+      check();
+    }
+    await session.run();
+  } catch (e) {
+    if (e.name !== "AbortError")
+      failure =
+        e.name === "NotAllowedError"
+          ? "Permiso de cámara denegado. Habilítalo y vuelve a tocar el botón."
+          : e.message;
+  } finally {
+    releaseCamera(false);
+    if (failure) announce(failure);
+    busy = false;
+    $("#camera-start").disabled = !config;
+  }
+};
+function suspend() {
+  operation++;
   session.cancel();
-  clearInterval(returnTimer);
-  cancelAnimationFrame(raf);
-  camera.stop();
-  tracker.close();
-  engine.looks.close();
-  audio?.close();
-  if (objectURL) URL.revokeObjectURL(objectURL);
+  releaseCamera();
+  screensaver.stop();
+  if ($("#result").open) $("#result").close();
+  clearResult();
+  audio?.suspend().catch(() => {});
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) suspend();
+  else if (!camera.stream) screensaver.start();
+});
+window.addEventListener("pagehide", suspend);
+window.addEventListener("pageshow", () => {
+  if (!camera.stream && !document.hidden) screensaver.start();
 });
