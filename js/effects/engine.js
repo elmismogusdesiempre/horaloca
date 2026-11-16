@@ -1,8 +1,10 @@
 import { byId } from "./catalog.js";
 import { accessory } from "./art.js";
 import { ambient, frame } from "./scene.js";
+import { PhotoLooks, lookOverlay } from "./looks.js";
 export class EffectsEngine {
-  constructor() {
+  constructor({ canvasFactory } = {}) {
+    this.looks = new PhotoLooks(canvasFactory);
     this.logo = null;
     this.quality = 1;
   }
@@ -16,6 +18,8 @@ export class EffectsEngine {
   }
   render(ctx, w, h, ids, faces, time, config) {
     const effects = ids.map((id) => byId.get(id)).filter(Boolean);
+    const cinematic = effects.find((e) => e.slot === "cinema");
+    if (cinematic) this.looks.apply(ctx, w, h, cinematic.id, time);
     for (const e of effects.filter((e) => e.slot === "ambient"))
       ambient(ctx, e.id, w, h, time, config.color, this.quality);
     for (const e of effects.filter((e) => e.requiresTracking)) {
@@ -39,6 +43,7 @@ export class EffectsEngine {
       }
     }
     for (const e of effects.filter((e) => ["frame", "cinema"].includes(e.slot)))
-      frame(ctx, e.id, w, h, time, config, this.logo);
+      if (!lookOverlay(ctx, e.id, w, h, time, config))
+        frame(ctx, e.id, w, h, time, config, this.logo);
   }
 }

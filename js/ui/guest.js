@@ -5,6 +5,7 @@ import { EffectsEngine } from "../effects/engine.js";
 import { compositions } from "../effects/selection.js";
 import { makeCollage } from "../collage/collage.js";
 import { Session } from "./session.js";
+import { fitViewport, posePrompts } from "./viewport.js";
 const $ = (s) => document.querySelector(s),
   canvas = $("#view"),
   ctx = canvas.getContext("2d"),
@@ -24,9 +25,26 @@ try {
 } catch {
   $("#status").textContent =
     "No se puede acceder al almacenamiento local. Habilítalo para continuar.";
+  $("#camera-message").textContent = $("#status").textContent;
   throw new Error("IndexedDB unavailable");
 }
-$("#event-name").textContent = config.name;
+function resizeCamera() {
+  const rect = document.querySelector(".camera-stage").getBoundingClientRect();
+  fitViewport(canvas, rect.width, rect.height);
+}
+resizeCamera();
+window.addEventListener("resize", resizeCamera);
+window.visualViewport?.addEventListener("resize", resizeCamera);
+function announce(message) {
+  $("#status").textContent = message;
+  $("#camera-message").textContent = message;
+}
+function requestImmersion() {
+  try {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  } catch {}
+}
+
 document.documentElement.style.setProperty("--accent", config.color);
 await engine.setLogo(config.logo).catch(() => {});
 function render(now) {
@@ -62,10 +80,13 @@ function tone() {
 $("#camera-start").onclick = async () => {
   const b = $("#camera-start");
   b.disabled = true;
+  requestImmersion();
   try {
     await camera.start();
     $("#welcome").hidden = true;
     $("#welcome").style.display = "none";
+    document.body.classList.add("camera-on");
+    resizeCamera();
     raf = requestAnimationFrame(render);
     $("#status").textContent =
       "Cargando seguimiento facial. La primera carga necesita conexión…";
@@ -80,11 +101,14 @@ $("#camera-start").onclick = async () => {
     ids = compositions(config.enabled, { tracking: tracker.ready })[0];
     ready = true;
     $("#start").disabled = false;
+    $("#start").hidden = false;
   } catch (e) {
-    $("#status").textContent =
+    const message =
       e.name === "NotAllowedError"
         ? "Permiso de cámara denegado. Habilítalo en el navegador y vuelve a intentarlo."
         : e.message;
+    announce(message);
+    document.body.classList.remove("camera-on");
     cancelAnimationFrame(raf);
     camera.stop();
     tracker.close();
@@ -97,16 +121,19 @@ const session = new Session({
   choose: () =>
     compositions(config.enabled, { tracking: tracker.ready, previous }),
   onPhase: (p) => {
-    if (p.phase === "effect") ids = p.ids;
+    if (p.phase === "effect") {
+      ids = p.ids;
+      $("#pose-prompt").textContent = posePrompts[p.index];
+      $("#countdown").textContent = "";
+    }
     if (p.phase === "prepare") {
       $("#countdown").className = "countdown prepare";
-      $("#countdown").textContent = `Prepárate… ${p.number}`;
+      $("#pose-prompt").textContent = "¡Acérquense! Esto va a estar bueno.";
+      $("#countdown").textContent = p.number;
     }
     if (p.phase === "countdown") {
       $("#countdown").className = "countdown";
       $("#countdown").textContent = p.number;
-      $("#photo-step").hidden = false;
-      $("#photo-step").textContent = `FOTO ${p.index + 1} / 4`;
     }
     if (p.phase === "flash") {
       $("#countdown").textContent = "";
@@ -148,7 +175,7 @@ const session = new Session({
     $("#collage-preview").src = objectURL;
     $("#download").href = objectURL;
     $("#download").download = `horaloca-${Date.now()}.jpg`;
-    $("#photo-step").hidden = true;
+    $("#pose-prompt").textContent = "";
     $("#result").showModal();
     let remaining = Math.max(
       10,
@@ -165,18 +192,22 @@ const session = new Session({
 $("#start").onclick = async () => {
   if (!ready || session.running) return;
   $("#start").disabled = true;
+  document.body.classList.add("session-active");
   try {
     if (config.sound) {
       audio ??= new AudioContext();
       await audio.resume();
     }
-    document.documentElement.requestFullscreen?.().catch(() => {});
+    requestImmersion();
     await session.run();
   } catch (e) {
     $("#countdown").textContent = "";
-    $("#status").textContent = e.message;
+    announce(e.message);
+    $("#pose-prompt").textContent = e.message;
     if (!camera.stream?.active || camera.video.paused) {
       ready = false;
+      document.body.classList.remove("camera-on");
+      $("#start").hidden = true;
       cancelAnimationFrame(raf);
       camera.stop();
       tracker.close();
@@ -185,15 +216,17 @@ $("#start").onclick = async () => {
       $("#camera-start").disabled = false;
     }
   } finally {
+    document.body.classList.remove("session-active");
     if (!$("#result").open) $("#start").disabled = !ready;
   }
 };
 function reset() {
   clearInterval(returnTimer);
+  document.body.classList.remove("session-active");
   if ($("#result").open) $("#result").close();
   $("#start").disabled = !ready;
   $("#countdown").textContent = "";
-  $("#photo-step").hidden = true;
+  $("#pose-prompt").textContent = "";
   ids = [];
   if (objectURL) {
     URL.revokeObjectURL(objectURL);
@@ -213,6 +246,7 @@ window.addEventListener("pagehide", () => {
   cancelAnimationFrame(raf);
   camera.stop();
   tracker.close();
+  engine.looks.close();
   audio?.close();
   if (objectURL) URL.revokeObjectURL(objectURL);
 });

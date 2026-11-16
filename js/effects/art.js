@@ -1,3 +1,4 @@
+import { rose, floralCrown, jewelledTiara } from "./botanical.js";
 // Original vector artwork. Coordinates are normalized to the tracked face width.
 const TAU = Math.PI * 2;
 export function path(c, points, fill, stroke) {
@@ -42,18 +43,7 @@ export function gradient(c, x, y, x2, y2, colors) {
   return g;
 }
 function flower(c, x, y, r, color = "#fff6e9") {
-  for (let i = 0; i < 7; i++) {
-    const a = (i * TAU) / 7;
-    ellipse(
-      c,
-      x + Math.cos(a) * r * 0.5,
-      y + Math.sin(a) * r * 0.5,
-      r * 0.45,
-      r * 0.3,
-      color,
-    );
-  }
-  ellipse(c, x, y, r * 0.23, r * 0.23, "#d5ad54");
+  rose(c, x, y, r, /f2|edb|f5c|cfce/i.test(color) ? "blush" : "ivory");
 }
 function gem(c, x, y, r, color = "#ccf5ff") {
   path(
@@ -203,47 +193,26 @@ export function accessory(c, id, t, color) {
       c.stroke();
       star(c, 0, -0.61, 0.1, "#efe2b8", 4);
       break;
-    case "king":
     case "queen":
     case "sparkle-crown":
-    case "tiara": {
-      const tiara = id === "tiara",
-        queen = id === "queen";
-      c.strokeStyle = gold;
-      c.lineWidth = 0.028;
-      const n = tiara ? 7 : queen ? 9 : 5;
-      for (let i = 0; i < n; i++) {
-        let x = (i - (n - 1) / 2) * (queen ? 0.095 : 0.14),
-          peak = -0.5 - (1 - Math.abs(x)) * (tiara ? 0.2 : queen ? 0.17 : 0.34);
-        if (queen) {
-          c.beginPath();
-          c.ellipse(x, -0.48, 0.065, 0.13, 0, 0, TAU);
-          c.strokeStyle = gold;
-          c.lineWidth = 0.012;
-          c.stroke();
-          ellipse(c, x, -0.63, 0.018, 0.018, "#fff9eb");
-        }
-        if (id === "sparkle-crown") {
-          c.strokeStyle = "#d9f7ff";
-          c.lineWidth = 0.012;
-          c.beginPath();
-          c.moveTo(x, -0.33);
-          c.lineTo(x, peak);
-          c.stroke();
-          star(c, x, peak, 0.065, "#e8fbff", 4);
-        } else
-          path(
-            c,
-            [
-              [x - 0.13, -0.33],
-              [x, peak],
-              [x + 0.13, -0.33],
-            ],
-            tiara ? null : gold,
-            tiara ? "#e5f7ff" : "#f7d386",
-          );
-        gem(c, x, peak, 0.033, queen ? "#e8b1f4" : color);
-        if (id === "sparkle-crown") star(c, x, peak - 0.05, 0.04, "#fff");
+    case "tiara":
+      jewelledTiara(c, id, t);
+      break;
+    case "king":
+      for (let i = -2; i <= 2; i++) {
+        const x = i * 0.16,
+          peak = -0.65 - (2 - Math.abs(i)) * 0.08;
+        path(
+          c,
+          [
+            [x - 0.13, -0.33],
+            [x, peak],
+            [x + 0.13, -0.33],
+          ],
+          gold,
+          "#f7d386",
+        );
+        gem(c, x, peak, 0.033, color);
       }
       path(
         c,
@@ -257,7 +226,6 @@ export function accessory(c, id, t, color) {
       );
       for (let i = -2; i <= 2; i++) gem(c, i * 0.16, -0.33, 0.028);
       break;
-    }
     case "giant-glasses":
     case "heart-glasses":
     case "visor":
@@ -488,12 +456,7 @@ export function accessory(c, id, t, color) {
       }
       break;
     case "flower-crown":
-      for (let i = 0; i < 9; i++) {
-        const x = (i - 4) * 0.1,
-          y = -0.37 - Math.cos((i - 4) * 0.3) * 0.15;
-        ellipse(c, x, y, 0.085, 0.025, "#6b8b68");
-        flower(c, x, y, 0.07, i % 2 ? "#fff9ec" : "#f5cfce");
-      }
+      floralCrown(c);
       break;
     case "orbit-stars":
       for (let i = 0; i < 7; i++) {

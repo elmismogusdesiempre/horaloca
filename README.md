@@ -1,6 +1,6 @@
 # Hora Loca — Photobooth local, etapa 1
 
-Implementación inicial ejecutable; **no es una entrega comercial certificada**. Hay 64 definiciones renderizables y pruebas automatizadas del motor. Falta validar la cámara, el tracking, el rendimiento y la calidad artística en dispositivos físicos. No se presentan como aprobados esos criterios.
+Implementación inicial ejecutable; **no es una entrega comercial certificada**. Hay 72 definiciones renderizables y pruebas automatizadas del motor. Falta validar la cámara, el tracking, el rendimiento y la calidad artística en dispositivos físicos. No se presentan como aprobados esos criterios.
 
 ## Publicación de prueba
 
@@ -32,11 +32,11 @@ Cámara espejo y exportación espejo deliberadamente coherentes. Cada captura co
 
 ## Catálogo
 
-64 efectos: Fiesta 24, Bodas 10, Quince 10, Cine 10, Corporativo 10. Lista y metadatos en [docs/CATALOGO.md](docs/CATALOGO.md). El estado `implemented-unvalidated-camera` significa implementado, pendiente de aceptación física. Renderizar píxeles distintos no certifica diferenciación artística suficiente.
+72 efectos: Fiesta 24, Bodas 10, Quince 10, Cine 18, Corporativo 10. Lista y metadatos en [docs/CATALOGO.md](docs/CATALOGO.md). El estado `implemented-unvalidated-camera` significa implementado, pendiente de aceptación física. Renderizar píxeles distintos no certifica diferenciación artística suficiente.
 
 ## Pruebas y límites
 
-`npm test`: 12 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 64 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
+`npm test`: 15 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 72 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
 
 El Canvas de Node no equivale a Safari/Chrome. No se ejecutó un navegador, una cámara física ni inferencia facial real en este entorno. Sigue [docs/VALIDACION.md](docs/VALIDACION.md) antes de usar en un evento. La etapa 1 permanece **pendiente de aceptación**.
 
@@ -53,3 +53,13 @@ Validación física y refinamiento artístico con fotografías; pose 3D/oclusion
 ## Recursos
 
 Arte vectorial original en `art.js` y `scene.js`. Dependencias y procedencia: [THIRD_PARTY.md](THIRD_PARTY.md). Sin marcas de cadenas ni personajes de terceros.
+
+## Revisión de diseño y efectos
+
+Interfaces blancas, esquinas rectas y controles sin bordes decorativos; preferencias persistidas en AGENTS.md. La cámara ocupa todo el viewport con proporción de captura adaptada a vertical/horizontal (lado mayor 1600 px). Durante las capturas solo se muestran imagen, frases de pose y cuenta regresiva; el botón inicial desaparece. Fullscreen nativo se solicita con interacción del usuario; algunos navegadores, especialmente Safari/iPad, pueden conservar controles propios del navegador. La web no puede forzar a ocultarlos cuando no existe soporte.
+
+Ocho composiciones fotográficas nuevas en Televisión y cine: falso color térmico (no mide temperatura), cianotipia, cómic, VHS, cine negro, hora dorada, prisma e instantánea. CCTV y espías ahora transforman los píxeles de la cámara a fósforo verde con barrido y grano, antes de dibujar indicadores. Las tarjetas y exportaciones usan el mismo pipeline. Thermal/cómic procesan a un máximo de 640 px de ancho para limitar coste; VHS/prisma reutilizan un Canvas auxiliar y pueden necesitar un equipo más potente. Los estilos de fotografía son independientes del fondo blanco de la interfaz.
+
+Corona floral y arreglos de boda: rosas vectoriales con pétalos en capas, hojas con nervaduras y ramas. Tiaras/reina: alambres curvos, perlas y engastes. No se agregan emojis dependientes del sistema. No se habilitan efectos nuevos automáticamente en eventos guardados: el organizador mantiene control de los autorizados.
+
+Las pruebas nuevas verifican valores de píxel del verde CCTV/espía, monocromía de cine negro, falso color térmico y proporciones de viewport. Son pruebas en Canvas nativo de Node; falta comprobar fluidez y compatibilidad visual en cámaras físicas y navegadores.

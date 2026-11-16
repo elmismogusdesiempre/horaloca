@@ -1,6 +1,6 @@
 # Estado de aceptación y prueba reproducible
 
-Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 12 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
+Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 15 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
 
 Estado general: pendiente de aceptación física y artística.
 
@@ -10,7 +10,7 @@ Estado general: pendiente de aceptación física y artística.
 | 2 Sesión automática de cuatro fotos | Máquina ejecutada con captura inyectada | Parcial; falta cámara |
 | 3 Cuenta regresiva independiente | 12 ticks 3–2–1 comprobados | Motor aprobado |
 | 4 Solo autorizados | 500 selecciones aleatorias | Motor aprobado |
-| 5 Catálogo ≥60 diferenciado | 64 renderizados, inspección de hoja | Cantidad comprobada; arte pendiente |
+| 5 Catálogo ≥60 diferenciado | 72 renderizados, inspección de hoja | Cantidad comprobada; arte pendiente |
 | 6 Landmarks reales | Integración MediaPipe, sin posiciones fallback | Pendiente inferencia real |
 | 7 Ajuste en movimiento | Escala/roll y suavizado implementados | Pendiente física |
 | 8 Ambientes y marcos | Render Canvas nativo | Parcial; falta navegador |
@@ -36,3 +36,12 @@ Estado general: pendiente de aceptación física y artística.
 10. Repetir Safari iPad, Chrome Android, Chrome/Edge escritorio y Safari macOS. Probar pantalla completa no soportada, vertical/horizontal, permisos y teclado. El fullscreen es opcional y no debe bloquear sesión.
 
 No hay objetivo FPS aprobado todavía. Objetivo para aceptación: render fluido sostenido cercano a 30 FPS con inferencia desacoplada; medir en cada equipo, registrar coste y reducir caras/partículas si no se alcanza. No se promete compatibilidad universal.
+
+## Pruebas manuales de la revisión
+
+- Panel: fondo blanco en escritorio/tableta, campos sin bordes, controles rectangulares. El indicador de foco del teclado sigue visible.
+- Invitado: activar cámara y comprobar cobertura completa sin logo, enlaces, paneles o márgenes. Durante sesión, ningún botón visible; solo frases y cuenta. Girar dispositivo y comprobar que no deforma la cara ni desalinea accesorios.
+- Salir de fullscreen con Escape y confirmar que la cámara sigue llenando el viewport. Documentar si Safari/iPad no permite ocultar la barra del navegador.
+- Cine: probar CCTV y espía, comprobar que la cara se vuelve verde y el collage conserva exactamente el tratamiento; comprobar texto GRABANDO.
+- Activar por separado los ocho estilos nuevos; revisar legibilidad, resolución deliberadamente reducida de térmico/cómic, fluidez de VHS/prisma y que el falso color se identifique como simulación.
+- Boda: comprobar corona floral a diferentes distancias, tamaño de pétalos, continuidad de hojas y que bouquets en esquinas no cubren caras. Tiaras deben seguir los ojos/cabeza, sin picos triangulares.

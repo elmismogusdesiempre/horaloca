@@ -1,3 +1,4 @@
+import { botanicalFrame } from "./botanical.js";
 import { path, ellipse, star, gradient, flower } from "./art.js";
 const TAU = Math.PI * 2,
   hash = (n) => {
@@ -251,39 +252,8 @@ export function frame(c, id, w, h, t, config, logo) {
       );
       break;
     case "rose-floral":
-      for (let i = 0; i < 23; i++) {
-        const a = Math.PI + (i * Math.PI) / 22,
-          x = w / 2 + Math.cos(a) * w * 0.48,
-          y = h * 0.28 + Math.sin(a) * h * 0.24;
-        ellipse(c, x, y, 18 * s, 7 * s, "#728e75");
-        if (i % 2 === 0) {
-          flower(c, x, y, 22 * s, "#edb7c8");
-          flower(c, x + 12 * s, y + 8 * s, 12 * s, "#fff0e1");
-        }
-      }
-      break;
     case "white-floral":
-      for (const [xx, yy, flip] of [
-        [0, h, 1],
-        [w, 0, -1],
-      ]) {
-        c.save();
-        c.translate(xx, yy);
-        c.scale(flip, -flip);
-        for (let i = 0; i < 12; i++) {
-          const x = i * 17 * s,
-            y = 20 * s + Math.sin(i) * 14 * s;
-          ellipse(c, x, y, 20 * s, 6 * s, "#809d7c");
-          flower(
-            c,
-            x,
-            y,
-            16 * s,
-            id === "white-floral" ? "#fffaf0" : "#f2c4d1",
-          );
-        }
-        c.restore();
-      }
+      botanicalFrame(c, w, h, id);
       break;
     case "wedding-minimal":
     case "wedding-names":
@@ -500,16 +470,41 @@ function cinema(c, id, w, h, t, config, s, label, line, plate) {
       );
       break;
     case "security":
-      c.fillStyle = "#0f30251a";
-      c.fillRect(0, 0, w, h);
-      for (let y = 0; y < h; y += 5 * s) {
-        c.fillStyle = "#00000016";
-        c.fillRect(0, y, w, s);
+      // The photographic phosphor treatment is applied before all overlays.
+      c.font = `${Math.max(12, 18 * s)}px monospace`;
+      c.fillStyle = "#b7ffb1";
+      c.textAlign = "left";
+      c.fillText("CÁMARA DE SEGURIDAD / CAM 04", p, p + 22 * s);
+      c.fillText(
+        "REC " +
+          String(Math.floor(t) % 60).padStart(2, "0") +
+          ":" +
+          String(Math.floor(t * 24) % 24).padStart(2, "0"),
+        p,
+        h - p,
+      );
+      c.textAlign = "right";
+      c.fillText(
+        new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" }),
+        w - p,
+        h - p,
+      );
+      if (Math.floor(t * 2) % 2 === 0) {
+        ellipse(c, w - p - 120 * s, p + 15 * s, 5 * s, 5 * s, "#a2ff91");
       }
-      label(c, "CAM 04  •  SIMULACIÓN CCTV", p, p + 20 * s, 17 * s, "#d7ffe5");
-      label(c, new Date().toLocaleString("es-CO"), p, h - p, 17 * s, "#d7ffe5");
-      c.strokeStyle = "#d7ffe577";
-      c.strokeRect(p, h * 0.2, w - p * 2, h * 0.6);
+      c.fillText("GRABANDO", w - p, p + 22 * s);
+      c.font = `${Math.max(9, 11 * s)}px monospace`;
+      c.fillText("SIMULACIÓN · HORA LOCA", w - p, h - p - 25 * s);
+      c.lineWidth = 1.5 * s;
+      for (const [x, y, dx, dy] of [
+        [p, h * 0.15, 1, 1],
+        [w - p, h * 0.15, -1, 1],
+        [p, h * 0.85, 1, -1],
+        [w - p, h * 0.85, -1, -1],
+      ]) {
+        line(x, y, x + dx * 40 * s, y, "#a7fdae88");
+        line(x, y, x, y + dy * 35 * s, "#a7fdae88");
+      }
       break;
     case "live":
       c.fillStyle = "#f13462";

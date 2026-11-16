@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { catalog } from "../js/effects/catalog.js";
 import { compositions, compatible } from "../js/effects/selection.js";
 import { Session } from "../js/ui/session.js";
-test("64 unique effects with required theme coverage", () => {
-  assert.equal(catalog.length, 64);
-  assert.equal(new Set(catalog.map((e) => e.id)).size, 64);
+test("72 unique effects with required theme coverage", () => {
+  assert.equal(catalog.length, 72);
+  assert.equal(new Set(catalog.map((e) => e.id)).size, 72);
   for (const theme of ["fiesta", "boda", "quince", "cine", "empresa"])
     assert.ok(
       catalog.filter((e) => e.theme === theme).length >=

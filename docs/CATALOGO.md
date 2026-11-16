@@ -1,6 +1,6 @@
 # Catálogo de efectos
 
-64 implementaciones de render; validación física y artística pendiente. Las variantes de paleta no se cuentan como efectos adicionales.
+72 implementaciones de render; validación física pendiente. Incluye ocho composiciones fotográficas nuevas en Cine. Las variantes de color no se cuentan como efectos adicionales.
 
 ## Fiesta loca
 
@@ -67,14 +67,22 @@
 |---|---|---|---|
 | breaking | Última hora | Cine | Titular y cintillo de noticias ficticias |
 | presenter | En el estudio | Cine | Composición de entrevista y señal al aire |
-| security | Cámara 04 | Cine | CCTV con fecha simulada y retícula |
+| security | Cámara 04 | Cine | Imagen verde de fósforo, barrido CRT, grabando y reloj simulado |
 | live | Estamos en vivo | Cine | Interfaz de directo ficticio |
 | magazine | Portada de la noche | Cine | Tipografía editorial y titulares |
 | red-carpet | Noche de estreno | Cine | Alfombra roja y luces de estreno |
 | suspect | Sospechoso de bailar | Cine | Ficha de comedia con líneas de altura |
-| spy | Misión: celebrar | Cine | Retícula de agente y expediente |
+| spy | Misión: celebrar | Cine | Imagen monocromática verde de espionaje, retícula y expediente |
 | scifi | Expedición orbital | Cine | HUD espacial con telemetría |
 | retro | Una película nuestra | Cine | Fotograma de 35 mm con perforaciones |
+| thermal | Espectro térmico | Cine | Falso color por luminancia, leyenda de espectro y simulación térmica |
+| cyanotype | Retrato en cianotipia | Cine | Revelado monocromático azul con textura de impresión |
+| comic-pop | ¡Esto es un cómic! | Cine | Posterización fotográfica, trama de puntos y estallido WOW |
+| vhs | Rebobina la fiesta | Cine | Eco de señal, desgarros de tracking y grabadora VHS |
+| film-noir | Una noche de cine negro | Cine | Fotografía monocromática con viñeta, grano y encuadre de cine |
+| golden-hour | La hora dorada | Cine | Luz cálida lateral, velo óptico y acabado de película |
+| prism | Prisma de fiesta | Cine | Reflejos duplicados, fugas de luz cromáticas y facetas ópticas |
+| instant-film | Recuerdo instantáneo | Cine | Emulsión cálida y composición de película instantánea |
 
 ## Corporativos
 

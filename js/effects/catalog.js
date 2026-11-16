@@ -212,7 +212,12 @@ const groups = {
       "cinema",
       "Composición de entrevista y señal al aire",
     ],
-    ["security", "Cámara 04", "cinema", "CCTV con fecha simulada y retícula"],
+    [
+      "security",
+      "Cámara 04",
+      "cinema",
+      "Imagen verde de fósforo, barrido CRT, grabando y reloj simulado",
+    ],
     ["live", "Estamos en vivo", "cinema", "Interfaz de directo ficticio"],
     [
       "magazine",
@@ -232,7 +237,12 @@ const groups = {
       "cinema",
       "Ficha de comedia con líneas de altura",
     ],
-    ["spy", "Misión: celebrar", "cinema", "Retícula de agente y expediente"],
+    [
+      "spy",
+      "Misión: celebrar",
+      "cinema",
+      "Imagen monocromática verde de espionaje, retícula y expediente",
+    ],
     ["scifi", "Expedición orbital", "cinema", "HUD espacial con telemetría"],
     [
       "retro",
@@ -284,6 +294,57 @@ const groups = {
     ],
   ],
 };
+// New photographic compositions, each with a distinct camera treatment.
+groups.cine.push(
+  [
+    "thermal",
+    "Espectro térmico",
+    "cinema",
+    "Falso color por luminancia, leyenda de espectro y simulación térmica",
+  ],
+  [
+    "cyanotype",
+    "Retrato en cianotipia",
+    "cinema",
+    "Revelado monocromático azul con textura de impresión",
+  ],
+  [
+    "comic-pop",
+    "¡Esto es un cómic!",
+    "cinema",
+    "Posterización fotográfica, trama de puntos y estallido WOW",
+  ],
+  [
+    "vhs",
+    "Rebobina la fiesta",
+    "cinema",
+    "Eco de señal, desgarros de tracking y grabadora VHS",
+  ],
+  [
+    "film-noir",
+    "Una noche de cine negro",
+    "cinema",
+    "Fotografía monocromática con viñeta, grano y encuadre de cine",
+  ],
+  [
+    "golden-hour",
+    "La hora dorada",
+    "cinema",
+    "Luz cálida lateral, velo óptico y acabado de película",
+  ],
+  [
+    "prism",
+    "Prisma de fiesta",
+    "cinema",
+    "Reflejos duplicados, fugas de luz cromáticas y facetas ópticas",
+  ],
+  [
+    "instant-film",
+    "Recuerdo instantáneo",
+    "cinema",
+    "Emulsión cálida y composición de película instantánea",
+  ],
+);
 export const themes = {
   fiesta: "Fiesta loca",
   boda: "Bodas",
@@ -311,7 +372,11 @@ export const catalog = Object.entries(groups).flatMap(([theme, rows]) =>
     resources: [],
     thumbnail: "rendered-canvas",
     compatibleWith: "one-per-slot; maximum 3 layers; cinema excludes frame",
-    performance: slot === "ambient" ? "medium" : "low",
+    performance:
+      slot === "ambient" ||
+      ["thermal", "comic-pop", "vhs", "prism"].includes(id)
+        ? "medium"
+        : "low",
     availability: "implemented-unvalidated-camera",
   })),
 );

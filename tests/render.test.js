@@ -15,11 +15,11 @@ const config = {
   quality: 0.94,
   date: true,
 };
-test("all 64 effects render actual different pixels; produce QA contact sheet", () => {
+test("all 72 effects render actual different pixels; produce QA contact sheet", () => {
   mkdirSync("work", { recursive: true });
   const sheet = createCanvas(1600, Math.ceil(catalog.length / 4) * 330),
     sc = sheet.getContext("2d"),
-    engine = new EffectsEngine(),
+    engine = new EffectsEngine({ canvasFactory: createCanvas }),
     hashes = new Set();
   catalog.forEach((e, i) => {
     const c = createCanvas(800, 600),
@@ -37,7 +37,7 @@ test("all 64 effects render actual different pixels; produce QA contact sheet", 
     sc.font = "14px sans-serif";
     sc.fillText(e.name, x + 10, y + 320);
   });
-  assert.equal(hashes.size, 64);
+  assert.equal(hashes.size, 72);
   writeFileSync("work/effects-contact-sheet.png", sheet.toBuffer("image/png"));
 });
 test("both collage layouts export full resolution JPEGs from four actual canvases", async () => {
@@ -54,7 +54,7 @@ test("both collage layouts export full resolution JPEGs from four actual canvase
       const c = createCanvas(1280, 960),
         ctx = c.getContext("2d");
       guide(ctx, 1280, 960);
-      new EffectsEngine().render(
+      new EffectsEngine({ canvasFactory: createCanvas }).render(
         ctx,
         1280,
         960,

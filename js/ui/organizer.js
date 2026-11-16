@@ -260,6 +260,7 @@ $("#preview-camera").onclick = async () => {
   }
 };
 function close() {
+  engine.looks.close();
   cancelAnimationFrame(raf);
   camera?.stop();
   tracker?.close();
