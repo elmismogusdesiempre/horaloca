@@ -2,6 +2,10 @@
 
 Implementación inicial ejecutable; **no es una entrega comercial certificada**. Hay 64 definiciones renderizables y pruebas automatizadas del motor. Falta validar la cámara, el tracking, el rendimiento y la calidad artística en dispositivos físicos. No se presentan como aprobados esos criterios.
 
+## Publicación de prueba
+
+Web: https://horaloca.vercel.app · Panel: https://horaloca.vercel.app/organizador.html . La publicación no sustituye la aceptación física.
+
 ## Ejecutar
 
 Node 22.12+ o 24, `npm ci`, `npm run dev`. Abre la URL indicada por Vite. Panel: `/organizador.html`; invitado: `/`. Guarda el evento, abre photobooth, permite cámara y pulsa el botón. Cada sesión dura aproximadamente 21 segundos, más la exportación.
@@ -14,7 +18,7 @@ Para tabletas necesitas HTTPS: un origen HTTP por IP de red no permite normalmen
 - `js/tracking`: MediaPipe Face Landmarker, 3 caras como máximo, asociación por proximidad, suavizado, frecuencia adaptativa 80/160 ms y ocultación al perder tracking.
 - `js/effects`: catálogo, selección, vectores originales, partículas, composiciones editoriales y motor por capas. Misma función para preview y captura.
 - `js/ui`: panel, guía ilustrada, experiencia invitado y máquina de sesión con bloqueo de doble inicio.
-- `js/collage`: 2×2 de 2400×2200 o tira de 1200×3600. JPEG de calidad configurable en configuración interna, recorte proporcional, nombre, frase y fecha.
+- `js/collage`: 2×2 de 2400×2200 o tira de 1200×3600. JPEG de calidad seleccionable en el panel, recorte proporcional, nombre, frase y fecha.
 - `js/storage`: IndexedDB; un evento local y hasta 12 collages, eliminando los más antiguos. Interfaces locales explícitas para reemplazar licencia/sincronización en etapa 2. No hay licencias comerciales simuladas.
 - `public/models`, `public/vendor/wasm`: modelo y runtime autoalojados. La cámara y la inferencia no suben imágenes. Las fuentes Google Fonts generan peticiones de tipografía; hay fuentes de sistema de respaldo.
 
@@ -32,7 +36,7 @@ Cámara espejo y exportación espejo deliberadamente coherentes. Cada captura co
 
 ## Pruebas y límites
 
-`npm test`: selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura; render real de los 64 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
+`npm test`: 12 pruebas aprobadas; selección aleatoria (500 sesiones), compatibilidad, no repetición, degradación sin tracking, doble inicio, cuentas regresivas, cancelación, fallos de captura, mapeo espejo y asociación sintética de rostros; render real de los 64 efectos usando Canvas nativo de Node y exportación de ambos collages. Genera `work/effects-contact-sheet.png` y dos JPEG de QA. `npm run build`: comprueba empaquetado de las dos páginas y copia los modelos.
 
 El Canvas de Node no equivale a Safari/Chrome. No se ejecutó un navegador, una cámara física ni inferencia facial real en este entorno. Sigue [docs/VALIDACION.md](docs/VALIDACION.md) antes de usar en un evento. La etapa 1 permanece **pendiente de aceptación**.
 

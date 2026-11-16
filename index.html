@@ -1,1 +1,80 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111119"><meta name="description" content="Hora Loca: cuatro momentos, una gran historia. Photobooth local con efectos y collage."><title>Hora Loca — Tu momento</title><link rel="stylesheet" href="/css/style.css"></head><body class="guest"><header class="guest-header"><a class="brand" href="/">hora<span>loca</span><i>✳</i></a><span id="event-name"></span><a class="quiet" href="/organizador.html">Organizador ↗</a></header><main class="booth"><div class="booth-top"><span class="eyebrow">EL ESCENARIO ES TUYO</span><span class="pill">4 fotos · infinitas posibilidades</span></div><div class="camera-stage"><video id="video" autoplay muted playsinline hidden></video><canvas id="view" width="1280" height="960" aria-label="Vista previa de la cámara con efectos"></canvas><div id="welcome" class="welcome"><span class="mini-star">✳</span><h1>Un poco de locura.<br>Mucho de <em>ti.</em></h1><p>Acércate, reúne a tu gente y deja que pase la magia.</p><button id="camera-start" class="button lime">Activar cámara <span>↗</span></button><p class="privacy">Tu cámara y tus fotos se quedan en este dispositivo.</p></div><div id="countdown" class="countdown" aria-live="assertive"></div><div id="flash" class="flash"></div><span id="photo-step" class="stage-label" hidden></span><span class="stage-corner">MAKE A LITTLE NOISE.</span></div><div class="guest-bottom"><p id="status" role="status">Una celebración. Cuatro momentos para guardar.</p><button id="start" class="button lime big" disabled>¡TÓCAME PARA EMPEZAR! <span>✳</span></button></div><div class="guest-notes"><span>01. Reúne a tu gente</span><span>02. Sonríe a tu manera</span><span>03. Guarda la historia</span></div></main><dialog id="result"><div class="result-head"><span class="eyebrow">ESTO MERECE GUARDARSE</span><h2>Qué buena noche.</h2></div><img id="collage-preview" alt="Collage de las cuatro fotografías"><a id="download" class="button lime" download="horaloca.jpg">Descargar recuerdo ↓</a><button id="again" class="button ghost">Volver a empezar</button><p id="return-message"></p></dialog><script type="module" src="/js/ui/guest.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#111119" />
+    <meta
+      name="description"
+      content="Hora Loca: cuatro momentos, una gran historia. Photobooth local con efectos y collage."
+    />
+    <title>Hora Loca — Tu momento</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body class="guest">
+    <header class="guest-header">
+      <a class="brand" href="/">hora<span>loca</span><i>✳</i></a
+      ><span id="event-name"></span
+      ><a class="quiet" href="/organizador.html">Organizador ↗</a>
+    </header>
+    <main class="booth">
+      <div class="booth-top">
+        <span class="eyebrow">EL ESCENARIO ES TUYO</span
+        ><span class="pill">4 fotos · infinitas posibilidades</span>
+      </div>
+      <div class="camera-stage">
+        <video id="video" autoplay muted playsinline hidden></video
+        ><canvas
+          id="view"
+          width="1280"
+          height="960"
+          aria-label="Vista previa de la cámara con efectos"
+        ></canvas>
+        <div id="welcome" class="welcome">
+          <span class="mini-star">✳</span>
+          <h1>Un poco de locura.<br />Mucho de <em>ti.</em></h1>
+          <p>Acércate, reúne a tu gente y deja que pase la magia.</p>
+          <button id="camera-start" class="button lime">
+            Activar cámara <span>↗</span>
+          </button>
+          <p class="privacy">
+            Tu cámara y tus fotos se quedan en este dispositivo.
+          </p>
+        </div>
+        <div id="countdown" class="countdown" aria-live="assertive"></div>
+        <div id="flash" class="flash"></div>
+        <span id="photo-step" class="stage-label" hidden></span
+        ><span class="stage-corner">MAKE A LITTLE NOISE.</span>
+      </div>
+      <div class="guest-bottom">
+        <p id="status" role="status">
+          Una celebración. Cuatro momentos para guardar.
+        </p>
+        <button id="start" class="button lime big" disabled>
+          ¡TÓCAME PARA EMPEZAR! <span>✳</span>
+        </button>
+      </div>
+      <div class="guest-notes">
+        <span>01. Reúne a tu gente</span><span>02. Sonríe a tu manera</span
+        ><span>03. Guarda la historia</span>
+      </div>
+    </main>
+    <dialog id="result">
+      <div class="result-head">
+        <span class="eyebrow">ESTO MERECE GUARDARSE</span>
+        <h2>Qué buena noche.</h2>
+      </div>
+      <img id="collage-preview" alt="Collage de las cuatro fotografías" /><a
+        id="download"
+        class="button lime"
+        download="horaloca.jpg"
+        >Descargar recuerdo ↓</a
+      ><button id="again" class="button ghost">Volver a empezar</button>
+      <p id="return-message"></p>
+    </dialog>
+    <script type="module" src="/js/ui/guest.js"></script>
+  </body>
+</html>

@@ -1,24 +1,271 @@
-import {catalog,themes,recommended} from '../effects/catalog.js';
-import {loadConfig,saveConfig} from '../storage/local.js';
-import {EffectsEngine} from '../effects/engine.js';
-import {Camera} from '../camera/camera.js';
-import {Tracker} from '../tracking/tracker.js';
-import {guide} from './guide.js';
-const $=s=>document.querySelector(s),engine=new EffectsEngine(),form=$('#config-form');let config,theme='fiesta',previewId,raf,camera,tracker;
-try{config=await loadConfig();}catch(e){$('#save-status').textContent='IndexedDB no está disponible. Revisa el modo privado y los permisos de almacenamiento.';throw e;}
-theme=config.theme;$('#catalog-count').textContent=catalog.length;
-for(const [id,name]of Object.entries(themes)){const o=document.createElement('option');o.value=id;o.textContent=name;form.elements.theme.append(o);const b=document.createElement('button');b.className='tab';b.dataset.theme=id;b.textContent=name;b.addEventListener('click',()=>{theme=id;render();});$('#theme-tabs').append(b);}
-for(const key of ['name','text','theme','layout','color','secondary','returnSeconds','date','sound']){const el=form.elements[key];if(el.type==='checkbox')el.checked=config[key];else el.value=config[key];}
-await engine.setLogo(config.logo).catch(()=>{});
-function read(){for(const key of ['name','text','theme','layout','color','secondary','returnSeconds','date','sound']){const el=form.elements[key];config[key]=el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value;}return config;}
-function counts(){$('#selected-count').textContent=`${config.enabled.length} habilitados`;}function render(){counts();document.querySelectorAll('.tab').forEach(b=>{b.classList.toggle('active',b.dataset.theme===theme);b.setAttribute('aria-pressed',b.dataset.theme===theme);});const q=$('#search').value.toLocaleLowerCase('es');const list=catalog.filter(e=>e.theme===theme&&`${e.name} ${e.description}`.toLocaleLowerCase('es').includes(q));const cards=$('#cards');cards.replaceChildren();for(const e of list){const card=document.createElement('article');card.className='effect-card'+(config.enabled.includes(e.id)?' enabled':'');const toggle=document.createElement('button');toggle.className='effect-toggle';toggle.setAttribute('aria-pressed',config.enabled.includes(e.id));toggle.setAttribute('aria-label',`${e.name}: ${e.description}`);const canvas=document.createElement('canvas');canvas.width=480;canvas.height=360;const ctx=canvas.getContext('2d');const faces=guide(ctx,480,360);engine.render(ctx,480,360,[e.id],faces,3,read());const body=document.createElement('div');body.className='card-body';const title=document.createElement('h3');title.textContent=e.name;const meta=document.createElement('div');meta.className='card-meta';meta.textContent=e.requiresTracking?'AR · Seguimiento facial':e.category+' · Escena';body.append(title,meta);const mark=document.createElement('span');mark.className='selected-mark';mark.textContent=config.enabled.includes(e.id)?'✓':'+';toggle.append(canvas,body,mark);toggle.onclick=()=>{config.enabled=config.enabled.includes(e.id)?config.enabled.filter(id=>id!==e.id):[...config.enabled,e.id];render();};const preview=document.createElement('button');preview.className='preview-button';preview.textContent='⌕';preview.setAttribute('aria-label',`Previsualizar ${e.name}`);preview.onclick=()=>openPreview(e);card.append(toggle,preview);cards.append(card);}if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent='No encontramos efectos con ese nombre.';cards.append(p);}}
-$('#search').oninput=render;
-$('#recommend').onclick=()=>{config.enabled=[...new Set([...config.enabled.filter(id=>catalog.find(e=>e.id===id)?.theme!==theme),...recommended(theme)])];render();$('#save-status').textContent='Selección recomendada aplicada. Guarda para usarla en el photobooth.';};
-form.onsubmit=async e=>{e.preventDefault();if(!config.enabled.length){$('#save-status').textContent='Activa al menos un efecto.';return;}try{await saveConfig(read());$('#save-status').textContent='Celebración guardada en este dispositivo ✓';}catch{$('#save-status').textContent='No se pudo guardar: comprueba el espacio y los permisos.';}};
-$('#launch').onclick=async e=>{e.preventDefault();if(!config.enabled.length){$('#save-status').textContent='Activa al menos un efecto antes de continuar.';return;}try{await saveConfig(read());location.href='/';}catch{$('#save-status').textContent='No se pudo guardar la configuración.';}};
-$('#logo-file').onchange=async e=>{const file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024){$('#save-status').textContent='El logotipo debe pesar menos de 2 MB.';return;}const reader=new FileReader();reader.onload=async()=>{try{await engine.setLogo(reader.result);config.logo=reader.result;render();}catch{$('#save-status').textContent='No se pudo leer la imagen.';}};reader.readAsDataURL(file);};
-$('#remove-logo').onclick=()=>{config.logo=null;engine.setLogo(null);render();};
-function openPreview(e){previewId=e.id;$('#preview-name').textContent=e.name;$('#preview-description').textContent=e.description;$('#preview-status').textContent='Guía ilustrada. Activa la cámara para verificar el ajuste real.';$('#effect-dialog').showModal();draw();}
-function draw(){const c=$('#preview-canvas'),ctx=c.getContext('2d');let faces;if(camera?.stream){camera.draw(ctx,c.width,c.height);faces=tracker?.update(camera.video,c.width,c.height,performance.now())||[];}else faces=guide(ctx,c.width,c.height);engine.render(ctx,c.width,c.height,[previewId],faces,performance.now()/1000,read());raf=requestAnimationFrame(draw);}
-$('#preview-camera').onclick=async()=>{const b=$('#preview-camera');b.disabled=true;try{camera??=new Camera($('#preview-video'));await camera.start();$('#preview-status').textContent='Cámara activa. Cargando seguimiento facial…';tracker?.close();tracker=new Tracker();await tracker.init();$('#preview-status').textContent='Seguimiento listo · hasta 3 rostros. Comprueba giro, distancia y movimiento.';}catch(e){$('#preview-status').textContent='No se pudo iniciar cámara o seguimiento: '+e.message;}finally{b.disabled=false;}};
-function close(){cancelAnimationFrame(raf);camera?.stop();tracker?.close();tracker=null;}$('#close-preview').onclick=()=>$('#effect-dialog').close();$('#effect-dialog').addEventListener('close',close);window.addEventListener('pagehide',close);render();
+import { catalog, themes, recommended } from "../effects/catalog.js";
+import { loadConfig, saveConfig } from "../storage/local.js";
+import { EffectsEngine } from "../effects/engine.js";
+import { Camera } from "../camera/camera.js";
+import { Tracker } from "../tracking/tracker.js";
+import { guide } from "./guide.js";
+const $ = (s) => document.querySelector(s),
+  engine = new EffectsEngine(),
+  form = $("#config-form");
+let config,
+  theme = "fiesta",
+  previewId,
+  raf,
+  camera,
+  tracker;
+try {
+  config = await loadConfig();
+} catch (e) {
+  $("#save-status").textContent =
+    "IndexedDB no está disponible. Revisa el modo privado y los permisos de almacenamiento.";
+  throw e;
+}
+theme = config.theme;
+$("#catalog-count").textContent = catalog.length;
+for (const [id, name] of Object.entries(themes)) {
+  const o = document.createElement("option");
+  o.value = id;
+  o.textContent = name;
+  form.elements.theme.append(o);
+  const b = document.createElement("button");
+  b.className = "tab";
+  b.dataset.theme = id;
+  b.textContent = name;
+  b.addEventListener("click", () => {
+    theme = id;
+    render();
+  });
+  $("#theme-tabs").append(b);
+}
+for (const key of [
+  "name",
+  "text",
+  "theme",
+  "layout",
+  "color",
+  "secondary",
+  "returnSeconds",
+  "date",
+  "sound",
+  "quality",
+]) {
+  const el = form.elements[key];
+  if (el.type === "checkbox") el.checked = config[key];
+  else el.value = config[key];
+}
+await engine.setLogo(config.logo).catch(() => {});
+function read() {
+  for (const key of [
+    "name",
+    "text",
+    "theme",
+    "layout",
+    "color",
+    "secondary",
+    "returnSeconds",
+    "date",
+    "sound",
+    "quality",
+  ]) {
+    const el = form.elements[key];
+    config[key] =
+      el.type === "checkbox"
+        ? el.checked
+        : el.type === "number" || key === "quality"
+          ? Number(el.value)
+          : el.value;
+  }
+  return config;
+}
+function counts() {
+  $("#selected-count").textContent = `${config.enabled.length} habilitados`;
+}
+function render() {
+  counts();
+  document.querySelectorAll(".tab").forEach((b) => {
+    b.classList.toggle("active", b.dataset.theme === theme);
+    b.setAttribute("aria-pressed", b.dataset.theme === theme);
+  });
+  const q = $("#search").value.toLocaleLowerCase("es");
+  const list = catalog.filter(
+    (e) =>
+      e.theme === theme &&
+      `${e.name} ${e.description}`.toLocaleLowerCase("es").includes(q),
+  );
+  const cards = $("#cards");
+  cards.replaceChildren();
+  for (const e of list) {
+    const card = document.createElement("article");
+    card.className =
+      "effect-card" + (config.enabled.includes(e.id) ? " enabled" : "");
+    const toggle = document.createElement("button");
+    toggle.className = "effect-toggle";
+    toggle.setAttribute("aria-pressed", config.enabled.includes(e.id));
+    toggle.setAttribute("aria-label", `${e.name}: ${e.description}`);
+    const canvas = document.createElement("canvas");
+    canvas.width = 480;
+    canvas.height = 360;
+    const ctx = canvas.getContext("2d");
+    const faces = guide(ctx, 480, 360);
+    engine.render(ctx, 480, 360, [e.id], faces, 3, read());
+    const body = document.createElement("div");
+    body.className = "card-body";
+    const title = document.createElement("h3");
+    title.textContent = e.name;
+    const meta = document.createElement("div");
+    meta.className = "card-meta";
+    meta.textContent = e.requiresTracking
+      ? "AR · Seguimiento facial"
+      : e.category + " · Escena";
+    body.append(title, meta);
+    const mark = document.createElement("span");
+    mark.className = "selected-mark";
+    mark.textContent = config.enabled.includes(e.id) ? "✓" : "+";
+    toggle.append(canvas, body, mark);
+    toggle.onclick = () => {
+      config.enabled = config.enabled.includes(e.id)
+        ? config.enabled.filter((id) => id !== e.id)
+        : [...config.enabled, e.id];
+      render();
+    };
+    const preview = document.createElement("button");
+    preview.className = "preview-button";
+    preview.textContent = "⌕";
+    preview.setAttribute("aria-label", `Previsualizar ${e.name}`);
+    preview.onclick = () => openPreview(e);
+    card.append(toggle, preview);
+    cards.append(card);
+  }
+  if (!list.length) {
+    const p = document.createElement("p");
+    p.className = "empty";
+    p.textContent = "No encontramos efectos con ese nombre.";
+    cards.append(p);
+  }
+}
+$("#search").oninput = render;
+$("#recommend").onclick = () => {
+  config.enabled = [
+    ...new Set([
+      ...config.enabled.filter(
+        (id) => catalog.find((e) => e.id === id)?.theme !== theme,
+      ),
+      ...recommended(theme),
+    ]),
+  ];
+  render();
+  $("#save-status").textContent =
+    "Selección recomendada aplicada. Guarda para usarla en el photobooth.";
+};
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  if (!config.enabled.length) {
+    $("#save-status").textContent = "Activa al menos un efecto.";
+    return;
+  }
+  try {
+    await saveConfig(read());
+    $("#save-status").textContent =
+      "Celebración guardada en este dispositivo ✓";
+  } catch {
+    $("#save-status").textContent =
+      "No se pudo guardar: comprueba el espacio y los permisos.";
+  }
+};
+$("#launch").onclick = async (e) => {
+  e.preventDefault();
+  if (!config.enabled.length) {
+    $("#save-status").textContent =
+      "Activa al menos un efecto antes de continuar.";
+    return;
+  }
+  try {
+    await saveConfig(read());
+    location.href = "/";
+  } catch {
+    $("#save-status").textContent = "No se pudo guardar la configuración.";
+  }
+};
+$("#logo-file").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    $("#save-status").textContent = "El logotipo debe pesar menos de 2 MB.";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      await engine.setLogo(reader.result);
+      config.logo = reader.result;
+      render();
+    } catch {
+      $("#save-status").textContent = "No se pudo leer la imagen.";
+    }
+  };
+  reader.readAsDataURL(file);
+};
+$("#remove-logo").onclick = () => {
+  config.logo = null;
+  engine.setLogo(null);
+  render();
+};
+function openPreview(e) {
+  previewId = e.id;
+  $("#preview-name").textContent = e.name;
+  $("#preview-description").textContent = e.description;
+  $("#preview-status").textContent =
+    "Guía ilustrada. Activa la cámara para verificar el ajuste real.";
+  $("#effect-dialog").showModal();
+  draw();
+}
+function draw() {
+  const c = $("#preview-canvas"),
+    ctx = c.getContext("2d");
+  let faces;
+  if (camera?.stream) {
+    camera.draw(ctx, c.width, c.height);
+    faces =
+      tracker?.update(camera.video, c.width, c.height, performance.now()) || [];
+  } else faces = guide(ctx, c.width, c.height);
+  engine.render(
+    ctx,
+    c.width,
+    c.height,
+    [previewId],
+    faces,
+    performance.now() / 1000,
+    read(),
+  );
+  raf = requestAnimationFrame(draw);
+}
+$("#preview-camera").onclick = async () => {
+  const b = $("#preview-camera");
+  b.disabled = true;
+  try {
+    camera ??= new Camera($("#preview-video"));
+    await camera.start();
+    $("#preview-status").textContent =
+      "Cámara activa. Cargando seguimiento facial…";
+    tracker?.close();
+    tracker = new Tracker();
+    await tracker.init();
+    $("#preview-status").textContent =
+      "Seguimiento listo · hasta 3 rostros. Comprueba giro, distancia y movimiento.";
+  } catch (e) {
+    $("#preview-status").textContent =
+      "No se pudo iniciar cámara o seguimiento: " + e.message;
+  } finally {
+    b.disabled = false;
+  }
+};
+function close() {
+  cancelAnimationFrame(raf);
+  camera?.stop();
+  tracker?.close();
+  tracker = null;
+}
+$("#close-preview").onclick = () => $("#effect-dialog").close();
+$("#effect-dialog").addEventListener("close", close);
+window.addEventListener("pagehide", close);
+render();

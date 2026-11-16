@@ -1,6 +1,8 @@
 # Estado de aceptación y prueba reproducible
 
-Fecha de ejecución automatizada: 16 noviembre 2026. Estado general: pendiente de aceptación física y artística.
+Fecha de ejecución automatizada: 16 noviembre 2026. Resultado: 12 pruebas automatizadas aprobadas y build de producción correcto. HTTP 200 para ambas páginas, modelo y ambos WASM del despliegue inicial. Sin navegador ni inferencia física.
+
+Estado general: pendiente de aceptación física y artística.
 
 | Criterio solicitado | Evidencia actual | Estado |
 |---|---|---|
