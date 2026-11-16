@@ -64,3 +64,7 @@ Prueba manual en teléfono:
 ## Regresión de inicio móvil
 
 El inicio no debe esperar `AudioContext.resume()`: en móvil puede quedar pendiente durante permisos/transiciones. Se solicita la cámara primero y el sonido se prepara sin bloquearla. Pruebas de regresión: audio pendiente, audio rechazado/no disponible y permiso de cámara denegado con audio pendiente. Repetir manualmente en el teléfono donde se observó el fallo. Fullscreen se solicita después de adquirir el video y no condiciona el inicio de cámara.
+
+## Bloqueo anterior a habilitar el botón
+
+Se reprodujo `TypeError: Illegal invocation` al ejecutar el temporizador con las restricciones de receptor de las APIs de Window. Guardar `setInterval` directamente en una propiedad y ejecutarlo como `this.schedule(...)` enlazaba el receptor a Screensaver. La excepción ocurría antes de cargar configuración/habilitar el botón. Los valores por defecto ahora llaman `globalThis.setInterval/clearInterval` conservando su receptor; si el temporizador no está disponible se mantiene una instrucción estática sin interrumpir la inicialización. Una prueba falla con la versión anterior y pasa con la corrección. Sigue pendiente confirmar el flujo en el teléfono del usuario.

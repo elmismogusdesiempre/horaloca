@@ -13,12 +13,14 @@ export const slides = [
     text: "Descarga tu collage al terminar. ¿Listos para otra ronda?",
   },
 ];
+// Invoke browser timers on globalThis; storing Window.setInterval directly and
+// calling it as this.schedule binds it to Screensaver and can throw Illegal invocation.
 export class Screensaver {
   constructor(
     render,
     {
-      schedule = setInterval,
-      unschedule = clearInterval,
+      schedule = (callback, delay) => globalThis.setInterval(callback, delay),
+      unschedule = (id) => globalThis.clearInterval(id),
       interval = 5500,
     } = {},
   ) {
@@ -30,10 +32,16 @@ export class Screensaver {
     this.stop();
     this.index = 0;
     this.show();
-    this.timer = this.schedule(() => {
-      this.index = (this.index + 1) % slides.length;
-      this.show();
-    }, this.interval);
+    try {
+      this.timer = this.schedule(() => {
+        this.index = (this.index + 1) % slides.length;
+        this.show();
+      }, this.interval);
+    } catch {
+      // A decorative carousel must never prevent the camera button from loading.
+      // Keep the first instruction visible if scheduling is unavailable.
+      this.timer = null;
+    }
   }
   show() {
     this.render(slides[this.index], this.index, slides.length);
